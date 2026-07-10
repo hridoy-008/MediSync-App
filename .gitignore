@@ -1,0 +1,48 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+*.g.dart.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Generated localization
+lib/core/localization/generated/
+
+# Secrets / Firebase config (do NOT commit per-deployment config)
+google-services.json
+GoogleService-Info.plist
+lib/firebase_options.dart
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Android
+android/.gradle/
+android/local.properties
+android/key.properties
+*.keystore
+*.jks
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+
+# Local IDE & agent configs
+.claude/
+.firebase/
+
+# Local build / run logs
+build_fb.txt
+build_log.txt
+build_log2.txt

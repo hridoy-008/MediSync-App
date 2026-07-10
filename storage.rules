@@ -1,0 +1,17 @@
+rules_version = '2';
+
+// Prescription images are owner-scoped (TRD §8, §9). A user can only read/write
+// objects under their own users/{uid}/ prefix. Uploads are capped and limited to
+// images to prevent abuse.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /users/{uid}/{allPaths=**} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
