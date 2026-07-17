@@ -118,7 +118,7 @@ class ReportGenerator {
           if (logs.isEmpty)
             pw.Text(
               isBangla ? 'কোনো ইতিহাস পাওয়া যায়নি।' : 'No log data recorded yet.',
-              style: const pw.TextStyle(fontStyle: pw.FontStyle.italic),
+              style: pw.TextStyle(fontStyle: pw.FontStyle.italic),
             )
           else
             pw.TableHelper.fromTextArray(

@@ -12,17 +12,40 @@ class RuleBasedStructurer implements PrescriptionStructurer {
   const RuleBasedStructurer();
   static final _uuid = Uuid();
 
+  // Matches leading line numbers (e.g. "1.", "1)", "(1)", "১.", "১)"), bullets (•, *, -, ·), and Rx/Rx:
+  static final _listPrefix = RegExp(
+    r'^([•·\-\*\+]+|\d+[\.\)]|\(\d+\)|[০-৯]+[\.\)]|\([০-৯]+\)|rx:?)\s*',
+    caseSensitive: false,
+  );
+
   // Lines that look like a medicine (including common OCR typos of tab/cap/syp).
   static final _medPrefix = RegExp(
-      r'^(tab|cap|syp|inj|susp|t\.|cap\.|tab\.|inj\.|tot|tod|tob|cop|cyp|cab|tad)\b',
+      r'^(tablet|capsule|syrup|tab|cap|syp|inj|susp|t|tot|tod|tob|cop|cyp|cab|tad)(?:\.?(?:\s+|$))',
       caseSensitive: false);
-  static final _dose = RegExp(r'(\d+(\.\d+)?)\s?(mg|ml|mcg|g|iu|tablet|tab)',
+
+  static final _medPrefixBn = RegExp(
+      r'^(ট্যাবলেট|ক্যাপসুল|সিরাপ|ইনজেকশন|ট্যাব|ক্যাপ|ইনজ)(?:\.?(?:\s+|$))',
       caseSensitive: false);
+
+  static final _dose = RegExp(
+      r'([\d০-৯]+(\.[\d০-৯]+)?)\s?(mg|ml|mcg|g|iu|tablet|tab|মি\.?গ্রা\.?|এমজি|মি\.?লি\.?|এমএল|টি|চামচ)',
+      caseSensitive: false);
+
   // Dosing patterns: 1+0+1, 1-0-1, 1 0 1
-  static final _tripleDose = RegExp(r'(\d)\s*[+\-x ]\s*(\d)\s*[+\-x ]\s*(\d)');
+  static final _tripleDose = RegExp(r'([\d০-৯])\s*[+\-x ]\s*([\d০-৯])\s*[+\-x ]\s*([\d০-৯])');
   static final _testHint = RegExp(
       r'\b(cbc|x-?ray|usg|ultrasound|ecg|mri|ct|test|fbs|2hbs|hba1c|lipid|urine|s\.?creatinine)\b',
       caseSensitive: false);
+
+  static final _freqCodes = RegExp(
+    r'\b(bd|bid|tds|tid|od|once|qid|daily|times)\b',
+    caseSensitive: false,
+  );
+
+  static final _freqCodesBn = RegExp(
+    r'(বার|করে|প্রতিদিন|দৈনিক)(?:\s+|$)',
+    caseSensitive: false,
+  );
 
   @override
   Future<StructuredResult> structure(String rawText) async {
@@ -33,6 +56,15 @@ class RuleBasedStructurer implements PrescriptionStructurer {
     final lines = rawText
         .split(RegExp(r'[\r\n]+'))
         .map((l) => l.trim())
+        .map((l) {
+          var cleaned = l;
+          while (true) {
+            final next = cleaned.replaceFirst(_listPrefix, '').trim();
+            if (next == cleaned) break;
+            cleaned = next;
+          }
+          return cleaned;
+        })
         .where((l) => l.length > 1)
         .toList();
 
@@ -98,21 +130,28 @@ class RuleBasedStructurer implements PrescriptionStructurer {
 
   bool _looksLikeMedicine(String normalized) =>
       _medPrefix.hasMatch(normalized) ||
+      _medPrefixBn.hasMatch(normalized) ||
       _dose.hasMatch(normalized) ||
       _tripleDose.hasMatch(normalized);
 
   Medicine _parseMedicine(String original, String normalized) {
     final confidence = <String, FieldConfidence>{};
 
-    // Name = strip the prefix + dosing tail.
+    // Name = strip the prefix + dosing tail + frequency terms.
     var name = original
         .replaceAll(_medPrefix, '')
+        .replaceAll(_medPrefixBn, '')
         .replaceAll(_tripleDose, '')
+        .replaceAll(_freqCodes, '')
+        .replaceAll(_freqCodesBn, '')
         .trim();
-    final doseMatch = _dose.firstMatch(normalized);
-    final dose = doseMatch?.group(0) ?? '';
-    if (dose.isNotEmpty) {
-      name = name.replaceAll(RegExp(RegExp.escape(dose), caseSensitive: false), '').trim();
+
+    final doseMatch = _dose.firstMatch(original);
+    final doseOriginal = doseMatch?.group(0) ?? '';
+    final dose = BanglaNumerals.toWestern(doseOriginal);
+
+    if (doseOriginal.isNotEmpty) {
+      name = name.replaceAll(RegExp(RegExp.escape(doseOriginal), caseSensitive: false), '').trim();
     }
     name = name.replaceAll(RegExp(r'[-•·]+$'), '').trim();
 
@@ -120,9 +159,12 @@ class RuleBasedStructurer implements PrescriptionStructurer {
     final isJunkName = name.isEmpty ||
         RegExp(r'^[\d\s+\-x•·/()]+$').hasMatch(name) ||
         name.toLowerCase() == 'tab' ||
+        name.toLowerCase() == 'tablet' ||
         name.toLowerCase() == 'tot' ||
         name.toLowerCase() == 'cap' ||
+        name.toLowerCase() == 'capsule' ||
         name.toLowerCase() == 'syp' ||
+        name.toLowerCase() == 'syrup' ||
         name.toLowerCase() == 'inj';
 
     if (isJunkName) {
@@ -130,16 +172,19 @@ class RuleBasedStructurer implements PrescriptionStructurer {
       confidence['name'] = FieldConfidence.low;
     } else {
       confidence['name'] =
-          _medPrefix.hasMatch(normalized) ? FieldConfidence.high : FieldConfidence.medium;
+          (_medPrefix.hasMatch(original) || _medPrefixBn.hasMatch(original))
+              ? FieldConfidence.high
+              : FieldConfidence.medium;
     }
     confidence['dose'] = dose.isEmpty ? FieldConfidence.low : FieldConfidence.high;
 
     // Frequency from triple-dose (sum of the three slots) or explicit codes.
     var frequency = 1;
-    final triple = _tripleDose.firstMatch(normalized);
+    final triple = _tripleDose.firstMatch(original);
     if (triple != null) {
       frequency = [triple.group(1), triple.group(2), triple.group(3)]
-          .map((g) => int.tryParse(g ?? '0') ?? 0)
+          .map((g) => BanglaNumerals.toWestern(g ?? '0'))
+          .map((g) => int.tryParse(g) ?? 0)
           .fold(0, (a, b) => a + b)
           .clamp(1, 6);
       confidence['frequency'] = FieldConfidence.high;
