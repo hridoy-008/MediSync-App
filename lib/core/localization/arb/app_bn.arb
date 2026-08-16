@@ -135,6 +135,11 @@
   "removeImage": "ছবি মুছুন",
   "camera": "ক্যামেরা",
   "gallery": "গ্যালারি",
+  "addExercise": "ব্যায়াম যোগ করুন",
+  "removeExercise": "ব্যায়াম মুছুন",
+  "editExerciseTime": "সময় সম্পাদনা করুন",
+  "exerciseDuration": "সময়কাল (মিনিট)",
+  "exerciseName": "ব্যায়ামের নাম",
 
   "profileTitle": "প্রোফাইল",
   "language": "ভাষা",

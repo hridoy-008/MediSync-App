@@ -109,6 +109,9 @@ class BmiPlanController extends GetxController {
         _planner.exercise(category: r.category, localeCode: locale);
     final existingExercise = exercise.value;
     final finalExercise = generatedExercise.copyWith(
+      items: (existingExercise != null && existingExercise.items.isNotEmpty)
+          ? existingExercise.items
+          : generatedExercise.items,
       description: existingExercise?.description,
       imagePath: existingExercise?.imagePath,
     );
@@ -171,5 +174,82 @@ class BmiPlanController extends GetxController {
     );
     exercise.value = updated;
     await LocalStore.instance.singletons.put('exercise_plan', updated.toMap());
+  }
+
+  List<ExerciseItem> _redistributeDurations(
+      List<ExerciseItem> originalItems, int targetTotalMins) {
+    if (originalItems.isEmpty) return const [];
+    final count = originalItems.length;
+    final total = targetTotalMins > 0 ? targetTotalMins : count * 15;
+    final base = (total / count).floor();
+    final minDuration = base < 1 ? 1 : base;
+    final remainder = total - (minDuration * count);
+
+    final updated = <ExerciseItem>[];
+    for (var i = 0; i < count; i++) {
+      final extra = (remainder > 0 && i < remainder)
+          ? 1
+          : (remainder < 0 && i < -remainder ? -1 : 0);
+      final duration = (minDuration + extra).clamp(1, 999);
+      updated.add(originalItems[i].copyWith(durationMins: duration));
+    }
+    return updated;
+  }
+
+  Future<void> addExercise({
+    required String name,
+    required String iconKey,
+  }) async {
+    final current = exercise.value;
+    if (current == null) return;
+    final currentItems = List<ExerciseItem>.from(current.items);
+    final currentTotal =
+        currentItems.fold<int>(0, (sum, e) => sum + e.durationMins);
+    final targetTotal = currentTotal > 0 ? currentTotal : 30;
+
+    currentItems.add(ExerciseItem(
+      name: name,
+      durationMins: 1,
+      iconKey: iconKey,
+    ));
+
+    final redistributed = _redistributeDurations(currentItems, targetTotal);
+    final updatedPlan = current.copyWith(items: redistributed);
+    exercise.value = updatedPlan;
+    await LocalStore.instance.singletons
+        .put('exercise_plan', updatedPlan.toMap());
+  }
+
+  Future<void> removeExercise(int index) async {
+    final current = exercise.value;
+    if (current == null) return;
+    final currentItems = List<ExerciseItem>.from(current.items);
+    if (currentItems.length <= 1) return; // Cannot remove final exercise
+
+    final currentTotal =
+        currentItems.fold<int>(0, (sum, e) => sum + e.durationMins);
+    currentItems.removeAt(index);
+
+    final redistributed = _redistributeDurations(currentItems, currentTotal);
+    final updatedPlan = current.copyWith(items: redistributed);
+    exercise.value = updatedPlan;
+    await LocalStore.instance.singletons
+        .put('exercise_plan', updatedPlan.toMap());
+  }
+
+  Future<void> updateExerciseDuration(int index, int newDurationMins) async {
+    final current = exercise.value;
+    if (current == null) return;
+    final currentItems = List<ExerciseItem>.from(current.items);
+    if (index < 0 || index >= currentItems.length) return;
+
+    final validDuration = newDurationMins.clamp(1, 999);
+    currentItems[index] =
+        currentItems[index].copyWith(durationMins: validDuration);
+
+    final updatedPlan = current.copyWith(items: currentItems);
+    exercise.value = updatedPlan;
+    await LocalStore.instance.singletons
+        .put('exercise_plan', updatedPlan.toMap());
   }
 }

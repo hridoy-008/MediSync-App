@@ -154,6 +154,18 @@ class ExerciseItem extends Equatable {
   final int durationMins;
   final String iconKey;
 
+  ExerciseItem copyWith({
+    String? name,
+    int? durationMins,
+    String? iconKey,
+  }) {
+    return ExerciseItem(
+      name: name ?? this.name,
+      durationMins: durationMins ?? this.durationMins,
+      iconKey: iconKey ?? this.iconKey,
+    );
+  }
+
   Map<String, dynamic> toMap() =>
       {'name': name, 'durationMins': durationMins, 'iconKey': iconKey};
 

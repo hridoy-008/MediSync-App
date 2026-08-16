@@ -135,6 +135,11 @@
   "removeImage": "Remove image",
   "camera": "Camera",
   "gallery": "Gallery",
+  "addExercise": "Add exercise",
+  "removeExercise": "Remove exercise",
+  "editExerciseTime": "Edit duration",
+  "exerciseDuration": "Duration (mins)",
+  "exerciseName": "Exercise name",
 
   "profileTitle": "Profile",
   "language": "Language",

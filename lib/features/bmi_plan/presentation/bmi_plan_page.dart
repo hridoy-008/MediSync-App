@@ -222,6 +222,7 @@ class _ExerciseSection extends GetView<BmiPlanController> {
       final fileExists = plan.imagePath != null &&
           plan.imagePath!.isNotEmpty &&
           File(plan.imagePath!).existsSync();
+      final totalMins = plan.items.fold<int>(0, (sum, e) => sum + e.durationMins);
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,7 +251,11 @@ class _ExerciseSection extends GetView<BmiPlanController> {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.xs),
+          Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.xxs, bottom: AppSpacing.xs),
+            child: Text('${l.exerciseDuration}: $totalMins min',
+                style: Theme.of(context).textTheme.bodyMedium),
+          ),
           if (hasDetails) ...[
             AppCard(
               child: Column(
@@ -281,16 +286,61 @@ class _ExerciseSection extends GetView<BmiPlanController> {
           ],
           AppCard(
             child: Column(
-              children: plan.items
-                  .map((e) => ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(_iconFor(e.iconKey),
-                            color: context.colors.secondary),
-                        title: Text(e.name),
-                        trailing: Text('${e.durationMins} min',
+              children: [
+                ...plan.items.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final e = entry.value;
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(_iconFor(e.iconKey),
+                        color: context.colors.secondary),
+                    title: Text(e.name),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('${e.durationMins} min',
                             style: Theme.of(context).textTheme.labelSmall),
-                      ))
-                  .toList(),
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 18),
+                          tooltip: l.editExerciseTime,
+                          onPressed: () => _openEditDurationDialog(
+                            context: context,
+                            l: l,
+                            exercise: e,
+                            onSave: (newMins) =>
+                                controller.updateExerciseDuration(index, newMins),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: plan.items.length > 1 ? Colors.red : Colors.grey,
+                          ),
+                          tooltip: l.removeExercise,
+                          onPressed: plan.items.length > 1
+                              ? () => controller.removeExercise(index)
+                              : null,
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+                const Divider(height: 16),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => _openAddExerciseDialog(
+                      context: context,
+                      l: l,
+                      onAdd: (name, iconKey) =>
+                          controller.addExercise(name: name, iconKey: iconKey),
+                    ),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: Text(l.addExercise),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -305,6 +355,99 @@ class _ExerciseSection extends GetView<BmiPlanController> {
         'yoga' => Icons.self_improvement,
         _ => Icons.fitness_center,
       };
+}
+
+Future<void> _openEditDurationDialog({
+  required BuildContext context,
+  required AppLocalizations l,
+  required ExerciseItem exercise,
+  required ValueChanged<int> onSave,
+}) {
+  final controller = TextEditingController(text: exercise.durationMins.toString());
+  return showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(exercise.name),
+      content: TextField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        decoration: InputDecoration(
+          labelText: l.exerciseDuration,
+          border: const OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(l.actionCancel),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final mins = int.tryParse(controller.text.trim()) ?? exercise.durationMins;
+            onSave(mins);
+            Navigator.pop(ctx);
+          },
+          child: Text(l.actionSave),
+        ),
+      ],
+    ),
+  );
+}
+
+Future<void> _openAddExerciseDialog({
+  required BuildContext context,
+  required AppLocalizations l,
+  required void Function(String name, String iconKey) onAdd,
+}) {
+  final nameController = TextEditingController();
+  final selectedIcon = 'walk'.obs;
+
+  return showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l.addExercise),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: nameController,
+            decoration: InputDecoration(
+              labelText: l.exerciseName,
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Obx(() => DropdownButtonFormField<String>(
+                value: selectedIcon.value,
+                decoration: const InputDecoration(border: OutlineInputBorder()),
+                items: const [
+                  DropdownMenuItem(value: 'walk', child: Text('Walk')),
+                  DropdownMenuItem(value: 'run', child: Text('Run / Cardio')),
+                  DropdownMenuItem(value: 'strength', child: Text('Strength')),
+                  DropdownMenuItem(value: 'yoga', child: Text('Yoga / Stretch')),
+                ],
+                onChanged: (v) => v == null ? null : selectedIcon.value = v,
+              )),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(l.actionCancel),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final name = nameController.text.trim();
+            if (name.isNotEmpty) {
+              onAdd(name, selectedIcon.value);
+            }
+            Navigator.pop(ctx);
+          },
+          child: Text(l.actionAdd),
+        ),
+      ],
+    ),
+  );
 }
 
 Future<void> _openDetailsDialog({
