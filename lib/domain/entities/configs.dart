@@ -23,18 +23,34 @@ class MealConfig extends Equatable {
     required this.mealType,
     required this.minutesFromMidnight,
     this.enabled = true,
+    this.customName,
+    this.isCustom = false,
+    this.preMealMinutes = 0,
   });
 
   final String id;
   final MealType mealType;
   final int minutesFromMidnight;
   final bool enabled;
+  final String? customName;
+  final bool isCustom;
+  final int preMealMinutes;
 
-  MealConfig copyWith({int? minutesFromMidnight, bool? enabled}) => MealConfig(
+  MealConfig copyWith({
+    int? minutesFromMidnight,
+    bool? enabled,
+    String? customName,
+    bool? isCustom,
+    int? preMealMinutes,
+  }) =>
+      MealConfig(
         id: id,
         mealType: mealType,
         minutesFromMidnight: minutesFromMidnight ?? this.minutesFromMidnight,
         enabled: enabled ?? this.enabled,
+        customName: customName ?? this.customName,
+        isCustom: isCustom ?? this.isCustom,
+        preMealMinutes: preMealMinutes ?? this.preMealMinutes,
       );
 
   Map<String, dynamic> toMap() => {
@@ -42,6 +58,9 @@ class MealConfig extends Equatable {
         'mealType': mealType.name,
         'minutesFromMidnight': minutesFromMidnight,
         'enabled': enabled,
+        'customName': customName,
+        'isCustom': isCustom,
+        'preMealMinutes': preMealMinutes,
       };
 
   factory MealConfig.fromMap(Map<String, dynamic> m) => MealConfig(
@@ -49,6 +68,9 @@ class MealConfig extends Equatable {
         mealType: enumByName(MealType.values, m['mealType'], MealType.breakfast),
         minutesFromMidnight: (m['minutesFromMidnight'] as num?)?.toInt() ?? 480,
         enabled: m['enabled'] as bool? ?? true,
+        customName: m['customName'] as String?,
+        isCustom: m['isCustom'] as bool? ?? false,
+        preMealMinutes: (m['preMealMinutes'] as num?)?.toInt() ?? 0,
       );
 
   /// Sensible BD defaults so the app is useful before the user customizes.
@@ -59,7 +81,7 @@ class MealConfig extends Equatable {
       ];
 
   @override
-  List<Object?> get props => [id, mealType, minutesFromMidnight, enabled];
+  List<Object?> get props => [id, mealType, minutesFromMidnight, enabled, customName, isCustom, preMealMinutes];
 }
 
 class HydrationConfig extends Equatable {

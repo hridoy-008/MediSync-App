@@ -91,4 +91,102 @@ void main() {
     expect(reminders.single.stockAlertEnabled, isTrue);
     expect(reminders.single.isLowStock, isFalse);
   });
+
+  group('Requirement 3: Pre-Meal Reminders', () {
+    test('MealConfig preMealMinutes defaults to 0 (Off)', () {
+      const config = MealConfig(
+        id: 'test_m',
+        mealType: MealType.lunch,
+        minutesFromMidnight: 14 * 60,
+      );
+      expect(config.preMealMinutes, 0);
+
+      // Backward compatibility check
+      final fromMapConfig = MealConfig.fromMap({
+        'id': 'test_m',
+        'mealType': 'lunch',
+        'minutesFromMidnight': 840,
+        'enabled': true,
+      });
+      expect(fromMapConfig.preMealMinutes, 0);
+    });
+
+    test('preMealMinutes = 0 generates only main meal reminder', () {
+      final meals = [
+        const MealConfig(
+          id: 'lunch',
+          mealType: MealType.lunch,
+          minutesFromMidnight: 14 * 60,
+          preMealMinutes: 0,
+        ),
+      ];
+      final reminders = gen.fromMeals(meals);
+      expect(reminders.length, 1);
+      expect(reminders.first.id, 'rem_meal_lunch');
+      expect(reminders.first.recurrence.timesOfDay, [14 * 60]);
+    });
+
+    test('preMealMinutes > 0 generates coexisting main and pre-meal reminders', () {
+      final meals = [
+        const MealConfig(
+          id: 'lunch',
+          mealType: MealType.lunch,
+          minutesFromMidnight: 14 * 60, // 2:00 PM (840 mins)
+          preMealMinutes: 15,
+        ),
+      ];
+      final reminders = gen.fromMeals(meals);
+      expect(reminders.length, 2);
+
+      final mainRem = reminders.firstWhere((r) => r.id == 'rem_meal_lunch');
+      final preRem = reminders.firstWhere((r) => r.id == 'rem_meal_pre_lunch');
+
+      expect(mainRem.recurrence.timesOfDay, [14 * 60]); // 14:00 (2:00 PM)
+      expect(preRem.recurrence.timesOfDay, [14 * 60 - 15]); // 13:45 (1:45 PM)
+      expect(preRem.title, contains('Lunch in 15 minutes'));
+    });
+
+    test('CRITICAL: Midnight crossover (12:05 AM - 15 mins -> 11:50 PM previous day)', () {
+      final meals = [
+        const MealConfig(
+          id: 'late_snack',
+          mealType: MealType.bedtimeSnack,
+          minutesFromMidnight: 5, // 12:05 AM (5 mins from midnight)
+          preMealMinutes: 15,
+        ),
+      ];
+      final reminders = gen.fromMeals(meals);
+      expect(reminders.length, 2);
+
+      final mainRem = reminders.firstWhere((r) => r.id == 'rem_meal_late_snack');
+      final preRem = reminders.firstWhere((r) => r.id == 'rem_meal_pre_late_snack');
+
+      expect(mainRem.recurrence.timesOfDay, [5]); // 12:05 AM
+      // 5 - 15 = -10 -> 24*60 - 10 = 1430 (23:50 / 11:50 PM on previous calendar day)
+      expect(preRem.recurrence.timesOfDay, [1430]);
+    });
+
+    test('Custom meal with pre-meal reminder is supported', () {
+      final meals = [
+        const MealConfig(
+          id: 'tea_time',
+          mealType: MealType.afternoon,
+          minutesFromMidnight: 16 * 60 + 30, // 4:30 PM (990 mins)
+          customName: 'Evening Tea',
+          isCustom: true,
+          preMealMinutes: 15,
+        ),
+      ];
+      final reminders = gen.fromMeals(meals);
+      expect(reminders.length, 2);
+
+      final mainRem = reminders.firstWhere((r) => r.id == 'rem_meal_tea_time');
+      final preRem = reminders.firstWhere((r) => r.id == 'rem_meal_pre_tea_time');
+
+      expect(mainRem.title, 'Evening Tea');
+      expect(mainRem.recurrence.timesOfDay, [990]); // 4:30 PM
+      expect(preRem.title, 'Evening Tea in 15 minutes');
+      expect(preRem.recurrence.timesOfDay, [975]); // 4:15 PM
+    });
+  });
 }

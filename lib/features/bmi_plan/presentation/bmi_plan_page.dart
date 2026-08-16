@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/design_system/design_system.dart';
 import '../../../core/localization/l10n.dart';
@@ -107,42 +110,101 @@ class _DietSection extends GetView<BmiPlanController> {
 
   @override
   Widget build(BuildContext context) {
-    final diet = controller.diet.value;
-    if (diet == null) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(title: l.dietChart, padding: EdgeInsets.zero),
-        Padding(
-          padding: const EdgeInsets.only(left: AppSpacing.xxs, bottom: AppSpacing.xs),
-          child: Text(l.dailyCalories(diet.targetKcal),
-              style: Theme.of(context).textTheme.bodyMedium),
-        ),
-        ...diet.meals.map((m) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-              child: AppCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(m.label,
-                        style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 4),
-                    ...m.items.map((i) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('• '),
-                              Expanded(child: Text(i)),
-                            ],
-                          ),
-                        )),
-                  ],
+    return Obx(() {
+      final diet = controller.diet.value;
+      if (diet == null) return const SizedBox.shrink();
+      final hasDetails = (diet.description != null && diet.description!.isNotEmpty) ||
+          (diet.imagePath != null && diet.imagePath!.isNotEmpty);
+      final fileExists = diet.imagePath != null &&
+          diet.imagePath!.isNotEmpty &&
+          File(diet.imagePath!).existsSync();
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SectionHeader(title: l.dietChart, padding: EdgeInsets.zero),
+              TextButton.icon(
+                onPressed: () => _openDetailsDialog(
+                  context: context,
+                  l: l,
+                  currentDescription: diet.description,
+                  currentImagePath: diet.imagePath,
+                  onSave: ({description, clearDescription = false, imagePath, clearImagePath = false}) =>
+                      controller.saveDietDetails(
+                    description: description,
+                    clearDescription: clearDescription,
+                    imagePath: imagePath,
+                    clearImagePath: clearImagePath,
+                  ),
+                  onPickImage: controller.pickImage,
                 ),
+                icon: Icon(hasDetails ? Icons.edit_note : Icons.add_comment_outlined, size: 18),
+                label: Text(hasDetails ? l.editDetails : l.addDetails),
               ),
-            )),
-      ],
-    );
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.xxs, bottom: AppSpacing.xs),
+            child: Text(l.dailyCalories(diet.targetKcal),
+                style: Theme.of(context).textTheme.bodyMedium),
+          ),
+          if (hasDetails) ...[
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (fileExists) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      child: Image.file(
+                        File(diet.imagePath!),
+                        height: 140,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    if (diet.description != null && diet.description!.isNotEmpty)
+                      const SizedBox(height: AppSpacing.xs),
+                  ],
+                  if (diet.description != null && diet.description!.isNotEmpty)
+                    Text(
+                      diet.description!,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+          ],
+          ...diet.meals.map((m) => Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                child: AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(m.label,
+                          style: Theme.of(context).textTheme.titleMedium),
+                      const SizedBox(height: 4),
+                      ...m.items.map((i) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('• '),
+                                Expanded(child: Text(i)),
+                              ],
+                            ),
+                          )),
+                    ],
+                  ),
+                ),
+              )),
+        ],
+      );
+    });
   }
 }
 
@@ -152,29 +214,88 @@ class _ExerciseSection extends GetView<BmiPlanController> {
 
   @override
   Widget build(BuildContext context) {
-    final plan = controller.exercise.value;
-    if (plan == null) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(title: l.exercisePlan, padding: EdgeInsets.zero),
-        const SizedBox(height: AppSpacing.xs),
-        AppCard(
-          child: Column(
-            children: plan.items
-                .map((e) => ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(_iconFor(e.iconKey),
-                          color: context.colors.secondary),
-                      title: Text(e.name),
-                      trailing: Text('${e.durationMins} min',
-                          style: Theme.of(context).textTheme.labelSmall),
-                    ))
-                .toList(),
+    return Obx(() {
+      final plan = controller.exercise.value;
+      if (plan == null) return const SizedBox.shrink();
+      final hasDetails = (plan.description != null && plan.description!.isNotEmpty) ||
+          (plan.imagePath != null && plan.imagePath!.isNotEmpty);
+      final fileExists = plan.imagePath != null &&
+          plan.imagePath!.isNotEmpty &&
+          File(plan.imagePath!).existsSync();
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SectionHeader(title: l.exercisePlan, padding: EdgeInsets.zero),
+              TextButton.icon(
+                onPressed: () => _openDetailsDialog(
+                  context: context,
+                  l: l,
+                  currentDescription: plan.description,
+                  currentImagePath: plan.imagePath,
+                  onSave: ({description, clearDescription = false, imagePath, clearImagePath = false}) =>
+                      controller.saveExerciseDetails(
+                    description: description,
+                    clearDescription: clearDescription,
+                    imagePath: imagePath,
+                    clearImagePath: clearImagePath,
+                  ),
+                  onPickImage: controller.pickImage,
+                ),
+                icon: Icon(hasDetails ? Icons.edit_note : Icons.add_comment_outlined, size: 18),
+                label: Text(hasDetails ? l.editDetails : l.addDetails),
+              ),
+            ],
           ),
-        ),
-      ],
-    );
+          const SizedBox(height: AppSpacing.xs),
+          if (hasDetails) ...[
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (fileExists) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      child: Image.file(
+                        File(plan.imagePath!),
+                        height: 140,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    if (plan.description != null && plan.description!.isNotEmpty)
+                      const SizedBox(height: AppSpacing.xs),
+                  ],
+                  if (plan.description != null && plan.description!.isNotEmpty)
+                    Text(
+                      plan.description!,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+          ],
+          AppCard(
+            child: Column(
+              children: plan.items
+                  .map((e) => ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(_iconFor(e.iconKey),
+                            color: context.colors.secondary),
+                        title: Text(e.name),
+                        trailing: Text('${e.durationMins} min',
+                            style: Theme.of(context).textTheme.labelSmall),
+                      ))
+                  .toList(),
+            ),
+          ),
+        ],
+      );
+    });
   }
 
   IconData _iconFor(String key) => switch (key) {
@@ -184,6 +305,173 @@ class _ExerciseSection extends GetView<BmiPlanController> {
         'yoga' => Icons.self_improvement,
         _ => Icons.fitness_center,
       };
+}
+
+Future<void> _openDetailsDialog({
+  required BuildContext context,
+  required AppLocalizations l,
+  required String? currentDescription,
+  required String? currentImagePath,
+  required Future<void> Function({
+    String? description,
+    bool clearDescription,
+    String? imagePath,
+    bool clearImagePath,
+  }) onSave,
+  required Future<String?> Function(ImageSource source) onPickImage,
+}) {
+  final controller = TextEditingController(text: currentDescription ?? '');
+  final selectedPath = RxnString(currentImagePath);
+
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+    ),
+    builder: (ctx) {
+      return Padding(
+        padding: EdgeInsets.only(
+          left: AppSpacing.md,
+          right: AppSpacing.md,
+          top: AppSpacing.md,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + AppSpacing.md,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(l.planDetails,
+                      style: Theme.of(ctx).textTheme.titleLarge),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              TextField(
+                controller: controller,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: l.descriptionHint,
+                  hintText: l.descriptionHint,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Obx(() {
+                final path = selectedPath.value;
+                final hasImage = path != null && path.isNotEmpty && File(path).existsSync();
+                if (hasImage) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        child: Image.file(
+                          File(path),
+                          height: 140,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Row(
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: () async {
+                              final newPath = await onPickImage(ImageSource.gallery);
+                              if (newPath != null) selectedPath.value = newPath;
+                            },
+                            icon: const Icon(Icons.photo_library, size: 16),
+                            label: Text(l.changeImage),
+                          ),
+                          const SizedBox(width: AppSpacing.xs),
+                          OutlinedButton.icon(
+                            onPressed: () async {
+                              final newPath = await onPickImage(ImageSource.camera);
+                              if (newPath != null) selectedPath.value = newPath;
+                            },
+                            icon: const Icon(Icons.camera_alt, size: 16),
+                            label: Text(l.camera),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Colors.red),
+                            tooltip: l.removeImage,
+                            onPressed: () => selectedPath.value = null,
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                } else {
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final path = await onPickImage(ImageSource.gallery);
+                            if (path != null) selectedPath.value = path;
+                          },
+                          icon: const Icon(Icons.photo_library),
+                          label: Text(l.gallery),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final path = await onPickImage(ImageSource.camera);
+                            if (path != null) selectedPath.value = path;
+                          },
+                          icon: const Icon(Icons.camera_alt),
+                          label: Text(l.camera),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+              }),
+              const SizedBox(height: AppSpacing.md),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: Text(l.actionCancel),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  AppButton(
+                    label: l.actionSave,
+                    onPressed: () async {
+                      final newText = controller.text.trim();
+                      final clearDesc = newText.isEmpty;
+                      final newPath = selectedPath.value;
+                      final clearImg = newPath == null || newPath.isEmpty;
+
+                      await onSave(
+                        description: clearDesc ? null : newText,
+                        clearDescription: clearDesc,
+                        imagePath: clearImg ? null : newPath,
+                        clearImagePath: clearImg,
+                      );
+                      if (ctx.mounted) Navigator.pop(ctx);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }
 
 class _NumberRow extends StatelessWidget {

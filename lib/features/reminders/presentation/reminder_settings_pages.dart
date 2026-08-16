@@ -27,6 +27,13 @@ String _mealLabel(AppLocalizations l, MealType t) => switch (t) {
       MealType.bedtimeSnack => l.bedtimeSnack,
     };
 
+String _mealDisplayTitle(AppLocalizations l, MealConfig m) {
+  if (m.isCustom && m.customName != null && m.customName!.isNotEmpty) {
+    return m.customName!;
+  }
+  return _mealLabel(l, m.mealType);
+}
+
 /// Meal times (PRD P0-6).
 class MealConfigPage extends GetView<ReminderSettingsController> {
   const MealConfigPage({super.key});
@@ -47,42 +54,241 @@ class MealConfigPage extends GetView<ReminderSettingsController> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: AppCard(
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.restaurant_outlined,
-                            color: context.colors.meal),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                            child: Text(_mealLabel(l, m.mealType),
-                                style:
-                                    Theme.of(context).textTheme.titleMedium)),
-                        TextButton(
-                          onPressed: () async {
-                            final mins = await _pickMinutes(
-                                context, m.minutesFromMidnight);
-                            if (mins != null) {
-                              controller.setMealTime(m.mealType, mins);
-                            }
-                          },
-                          child: Text(TimeFormat.fromMinutes(
-                              m.minutesFromMidnight,
-                              bangla: bangla)),
+                        Row(
+                          children: [
+                            Icon(Icons.restaurant_outlined,
+                                color: context.colors.meal),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                _mealDisplayTitle(l, m),
+                                style: Theme.of(context).textTheme.titleMedium,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                final mins = await _pickMinutes(
+                                    context, m.minutesFromMidnight);
+                                if (mins != null) {
+                                  controller.setMealTimeById(m.id, mins);
+                                }
+                              },
+                              child: Text(TimeFormat.fromMinutes(
+                                  m.minutesFromMidnight,
+                                  bangla: bangla)),
+                            ),
+                            if (m.isCustom) ...[
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined, size: 20),
+                                onPressed: () =>
+                                    _showMealDialog(context, controller, meal: m),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.delete_outline,
+                                    size: 20, color: context.colors.danger),
+                                onPressed: () => _confirmDelete(context, m),
+                              ),
+                            ],
+                            Switch(
+                              value: m.enabled,
+                              onChanged: (v) =>
+                                  controller.toggleMealById(m.id, v),
+                            ),
+                          ],
                         ),
-                        Switch(
-                          value: m.enabled,
-                          onChanged: (v) =>
-                              controller.toggleMeal(m.mealType, v),
+                        const Divider(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.alarm_outlined,
+                                    size: 16, color: context.colors.onSurfaceMuted),
+                                const SizedBox(width: 4),
+                                Text(
+                                  l.preMealReminder,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                            DropdownButton<int>(
+                              value: [0, 5, 10, 15, 30].contains(m.preMealMinutes)
+                                  ? m.preMealMinutes
+                                  : 0,
+                              isDense: true,
+                              underline: const SizedBox(),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelMedium
+                                  ?.copyWith(color: context.colors.primary),
+                              items: [
+                                DropdownMenuItem(
+                                    value: 0, child: Text(l.preMealOff)),
+                                DropdownMenuItem(
+                                    value: 5, child: Text(l.preMeal5Mins)),
+                                DropdownMenuItem(
+                                    value: 10, child: Text(l.preMeal10Mins)),
+                                DropdownMenuItem(
+                                    value: 15, child: Text(l.preMeal15Mins)),
+                                DropdownMenuItem(
+                                    value: 30, child: Text(l.preMeal30Mins)),
+                              ],
+                              onChanged: (v) {
+                                if (v != null) {
+                                  controller.setPreMealMinutesById(m.id, v);
+                                }
+                              },
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
                 ),
+              const SizedBox(height: AppSpacing.md),
+              AppButton(
+                label: bangla ? 'অতিরিক্ত খাবার যোগ করুন' : 'Add Extra Meal',
+                icon: Icons.add,
+                kind: AppButtonKind.secondary,
+                onPressed: () => _showMealDialog(context, controller),
+              ),
             ],
           );
         }),
       ),
     );
   }
+
+  void _confirmDelete(BuildContext context, MealConfig meal) {
+    final l = context.l10n;
+    Get.dialog(AlertDialog(
+      title: Text(l.actionDelete),
+      content: Text(meal.customName ?? ''),
+      actions: [
+        TextButton(onPressed: Get.back, child: Text(l.actionCancel)),
+        FilledButton(
+          onPressed: () {
+            controller.deleteCustomMeal(meal.id);
+            Get.back();
+          },
+          child: Text(l.actionDelete),
+        ),
+      ],
+    ));
+  }
+}
+
+void _showMealDialog(
+  BuildContext context,
+  ReminderSettingsController controller, {
+  MealConfig? meal,
+}) {
+  final l = context.l10n;
+  final bangla = Get.find<LocaleController>().isBangla;
+  final nameController = TextEditingController(text: meal?.customName ?? '');
+  var selectedMinutes = meal?.minutesFromMidnight ?? 12 * 60;
+  var selectedPreMeal = meal?.preMealMinutes ?? 0;
+
+  Get.dialog(
+    StatefulBuilder(
+      builder: (context, setState) {
+        return AlertDialog(
+          title: Text(meal == null
+              ? (bangla ? 'অতিরিক্ত খাবার যোগ করুন' : 'Add Extra Meal')
+              : (bangla ? 'খাবার সম্পাদনা করুন' : 'Edit Meal')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: bangla ? 'খাবারের নাম' : 'Meal Name',
+                  hintText: bangla ? 'যেমন: সকালের চা' : 'e.g. Morning Tea',
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    bangla ? 'সময়:' : 'Time:',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      final mins = await _pickMinutes(context, selectedMinutes);
+                      if (mins != null) {
+                        setState(() => selectedMinutes = mins);
+                      }
+                    },
+                    child: Text(
+                      TimeFormat.fromMinutes(selectedMinutes, bangla: bangla),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    l.preMealReminder,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  DropdownButton<int>(
+                    value: [0, 5, 10, 15, 30].contains(selectedPreMeal)
+                        ? selectedPreMeal
+                        : 0,
+                    isDense: true,
+                    items: [
+                      DropdownMenuItem(value: 0, child: Text(l.preMealOff)),
+                      DropdownMenuItem(value: 5, child: Text(l.preMeal5Mins)),
+                      DropdownMenuItem(value: 10, child: Text(l.preMeal10Mins)),
+                      DropdownMenuItem(value: 15, child: Text(l.preMeal15Mins)),
+                      DropdownMenuItem(value: 30, child: Text(l.preMeal30Mins)),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) {
+                        setState(() => selectedPreMeal = v);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: Get.back,
+              child: Text(context.l10n.actionCancel),
+            ),
+            FilledButton(
+              onPressed: () {
+                final text = nameController.text.trim();
+                if (text.isEmpty) return;
+                if (meal == null) {
+                  controller.addCustomMeal(text, selectedMinutes,
+                      preMealMinutes: selectedPreMeal);
+                } else {
+                  controller.editCustomMeal(meal.id, text, selectedMinutes,
+                      preMealMinutes: selectedPreMeal);
+                }
+                Get.back();
+              },
+              child: Text(context.l10n.actionSave),
+            ),
+          ],
+        );
+      },
+    ),
+  );
 }
 
 /// Water reminders (PRD P0-7).

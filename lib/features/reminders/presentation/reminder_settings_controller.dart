@@ -39,10 +39,11 @@ class ReminderSettingsController extends GetxController {
   // ---- Meals ----
   Future<void> setMealTime(MealType type, int minutes) async {
     final updated = meals
-        .map((m) => m.mealType == type
+        .map((m) => (!m.isCustom && m.mealType == type)
             ? m.copyWith(minutesFromMidnight: minutes)
             : m)
-        .toList();
+        .toList()
+      ..sort((a, b) => a.minutesFromMidnight.compareTo(b.minutesFromMidnight));
     meals.assignAll(updated);
     await _config.saveMeals(updated);
     await _service.applyHabitReminders();
@@ -50,8 +51,81 @@ class ReminderSettingsController extends GetxController {
 
   Future<void> toggleMeal(MealType type, bool enabled) async {
     final updated = meals
-        .map((m) => m.mealType == type ? m.copyWith(enabled: enabled) : m)
+        .map((m) => (!m.isCustom && m.mealType == type) ? m.copyWith(enabled: enabled) : m)
         .toList();
+    meals.assignAll(updated);
+    await _config.saveMeals(updated);
+    await _service.applyHabitReminders();
+  }
+
+  Future<void> setMealTimeById(String id, int minutes) async {
+    final updated = meals
+        .map((m) => m.id == id ? m.copyWith(minutesFromMidnight: minutes) : m)
+        .toList()
+      ..sort((a, b) => a.minutesFromMidnight.compareTo(b.minutesFromMidnight));
+    meals.assignAll(updated);
+    await _config.saveMeals(updated);
+    await _service.applyHabitReminders();
+  }
+
+  Future<void> toggleMealById(String id, bool enabled) async {
+    final updated = meals
+        .map((m) => m.id == id ? m.copyWith(enabled: enabled) : m)
+        .toList();
+    meals.assignAll(updated);
+    await _config.saveMeals(updated);
+    await _service.applyHabitReminders();
+  }
+
+  Future<void> setPreMealMinutesById(String id, int minutes) async {
+    final updated = meals
+        .map((m) => m.id == id ? m.copyWith(preMealMinutes: minutes) : m)
+        .toList();
+    meals.assignAll(updated);
+    await _config.saveMeals(updated);
+    await _service.applyHabitReminders();
+  }
+
+  Future<void> addCustomMeal(String name, int minutesFromMidnight, {int preMealMinutes = 0}) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+    final newMeal = MealConfig(
+      id: 'meal_custom_${DateTime.now().millisecondsSinceEpoch}',
+      mealType: MealType.breakfast,
+      minutesFromMidnight: minutesFromMidnight,
+      enabled: true,
+      customName: trimmed,
+      isCustom: true,
+      preMealMinutes: preMealMinutes,
+    );
+    final updated = [...meals, newMeal]
+      ..sort((a, b) => a.minutesFromMidnight.compareTo(b.minutesFromMidnight));
+    meals.assignAll(updated);
+    await _config.saveMeals(updated);
+    await _service.applyHabitReminders();
+  }
+
+  Future<void> editCustomMeal(String id, String newName, int minutesFromMidnight, {int? preMealMinutes}) async {
+    final trimmed = newName.trim();
+    if (trimmed.isEmpty) return;
+    final updated = meals.map((m) {
+      if (m.id == id) {
+        return m.copyWith(
+          customName: trimmed,
+          minutesFromMidnight: minutesFromMidnight,
+          preMealMinutes: preMealMinutes ?? m.preMealMinutes,
+        );
+      }
+      return m;
+    }).toList()
+      ..sort((a, b) => a.minutesFromMidnight.compareTo(b.minutesFromMidnight));
+    meals.assignAll(updated);
+    await _config.saveMeals(updated);
+    await _service.applyHabitReminders();
+  }
+
+  Future<void> deleteCustomMeal(String id) async {
+    final updated = meals.where((m) => m.id != id).toList();
     meals.assignAll(updated);
     await _config.saveMeals(updated);
     await _service.applyHabitReminders();

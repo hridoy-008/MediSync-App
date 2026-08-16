@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../domain/entities/reminder.dart';
 import '../../../domain/entities/user_profile.dart';
 import '../../../domain/enums.dart';
+import '../../../domain/repositories/config_repository.dart';
 import '../../../domain/repositories/profile_repository.dart';
 import '../../../domain/repositories/reminder_repository.dart';
 import '../../reminders/application/reminder_service.dart';
@@ -14,15 +15,18 @@ class DashboardController extends GetxController {
     required ReminderRepository reminderRepository,
     required ProfileRepository profileRepository,
     required ReminderService reminderService,
+    ConfigRepository? configRepository,
     TimelineBuilder builder = const TimelineBuilder(),
   })  : _reminders = reminderRepository,
         _profiles = profileRepository,
         _service = reminderService,
+        _config = configRepository ?? Get.find<ConfigRepository>(),
         _builder = builder;
 
   final ReminderRepository _reminders;
   final ProfileRepository _profiles;
   final ReminderService _service;
+  final ConfigRepository _config;
   final TimelineBuilder _builder;
 
   final navIndex = 0.obs;
@@ -49,11 +53,13 @@ class DashboardController extends GetxController {
   Future<void> loadToday() async {
     final reminders = (await _reminders.getAll()).valueOrNull ?? const [];
     final allLogs = (await _reminders.getLogs()).valueOrNull ?? const [];
+    final meals = (await _config.getMeals()).valueOrNull ?? const [];
     logs.assignAll(allLogs);
     final items = _builder.buildForDay(
       reminders: reminders,
       logs: allLogs,
       day: DateTime.now(),
+      meals: meals,
     );
     timeline.assignAll(items);
     final a = _builder.adherence(items);

@@ -29,7 +29,7 @@ class HomeShell extends GetView<DashboardController> {
             ProfilePage(),
           ],
         ),
-        floatingActionButton: index == 0
+        floatingActionButton: index == 1
             ? FloatingActionButton.extended(
                 onPressed: () => Get.toNamed(AppRoutes.capture),
                 icon: const Icon(Icons.add_a_photo_outlined),

@@ -89,11 +89,16 @@ class ReminderGenerator {
 
   List<Reminder> fromMeals(List<MealConfig> meals) {
     final now = DateTime.now();
-    return meals.where((m) => m.enabled).map((m) {
-      return Reminder(
+    final out = <Reminder>[];
+    for (final m in meals.where((m) => m.enabled)) {
+      final title = (m.isCustom && m.customName != null && m.customName!.isNotEmpty)
+          ? m.customName!
+          : _mealTitle(m.mealType);
+      
+      out.add(Reminder(
         id: 'rem_meal_${m.id}',
         type: ReminderType.meal,
-        title: _mealTitle(m.mealType),
+        title: title,
         refId: m.id,
         mealType: m.mealType,
         recurrence: RecurrenceRule(
@@ -101,8 +106,29 @@ class ReminderGenerator {
           timesOfDay: [m.minutesFromMidnight],
         ),
         createdAt: now,
-      );
-    }).toList();
+      ));
+
+      if (m.preMealMinutes > 0) {
+        final preMinutesRaw = m.minutesFromMidnight - m.preMealMinutes;
+        final preMinutesFromMidnight =
+            (preMinutesRaw % (24 * 60) + (24 * 60)) % (24 * 60);
+
+        out.add(Reminder(
+          id: 'rem_meal_pre_${m.id}',
+          type: ReminderType.meal,
+          title: '$title in ${m.preMealMinutes} minutes',
+          subtitle: 'Pre-meal reminder',
+          refId: m.id,
+          mealType: m.mealType,
+          recurrence: RecurrenceRule(
+            frequency: RecurrenceFrequency.daily,
+            timesOfDay: [preMinutesFromMidnight],
+          ),
+          createdAt: now,
+        ));
+      }
+    }
+    return out;
   }
 
   String _mealTitle(MealType t) => switch (t) {

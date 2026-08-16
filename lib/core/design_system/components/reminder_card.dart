@@ -24,6 +24,7 @@ class ReminderCard extends StatelessWidget {
     this.onSkip,
     this.stockCount,
     this.isLowStock = false,
+    this.mealDetails,
   });
 
   final ReminderType type;
@@ -40,6 +41,7 @@ class ReminderCard extends StatelessWidget {
   final VoidCallback? onSkip;
   final int? stockCount;
   final bool isLowStock;
+  final Widget? mealDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -117,6 +119,7 @@ class ReminderCard extends StatelessWidget {
               _TimeAndStatus(timeLabel: timeLabel, status: status),
             ],
           ),
+          if (mealDetails != null) mealDetails!,
           if (pending && (onTaken != null || onSnooze != null || onSkip != null)) ...[
             const SizedBox(height: AppSpacing.sm),
             Row(
@@ -152,6 +155,96 @@ class ReminderCard extends StatelessWidget {
                     ),
                   ),
                 ],
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Encapsulated, collapsible-ready meal details container (Requirement 4).
+class MealDetailsSection extends StatelessWidget {
+  const MealDetailsSection({
+    super.key,
+    this.linkedMedicineSummary,
+    this.preMealSummary,
+  });
+
+  final String? linkedMedicineSummary;
+  final String? preMealSummary;
+
+  bool get hasContent =>
+      (linkedMedicineSummary != null && linkedMedicineSummary!.isNotEmpty) ||
+      (preMealSummary != null && preMealSummary!.isNotEmpty);
+
+  @override
+  Widget build(BuildContext context) {
+    if (!hasContent) return const SizedBox.shrink();
+    final colors = context.colors;
+
+    return Container(
+      margin: const EdgeInsets.only(top: AppSpacing.xs),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (linkedMedicineSummary != null &&
+              linkedMedicineSummary!.isNotEmpty) ...[
+            Row(
+              children: [
+                Icon(
+                  Icons.medication_outlined,
+                  size: 14,
+                  color: colors.primary,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    linkedMedicineSummary!,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w500,
+                        ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (linkedMedicineSummary != null &&
+              linkedMedicineSummary!.isNotEmpty &&
+              preMealSummary != null &&
+              preMealSummary!.isNotEmpty)
+            const SizedBox(height: 2),
+          if (preMealSummary != null && preMealSummary!.isNotEmpty) ...[
+            Row(
+              children: [
+                Icon(
+                  Icons.alarm_outlined,
+                  size: 14,
+                  color: colors.onSurfaceMuted,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    preMealSummary!,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: colors.onSurfaceMuted,
+                        ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
           ],

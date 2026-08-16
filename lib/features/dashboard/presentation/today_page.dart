@@ -83,6 +83,10 @@ class TodayPage extends GetView<DashboardController> {
                             : null,
                         stockCount: item.reminder.stockCount,
                         isLowStock: item.reminder.isLowStock,
+                        mealDetails: MealDetailsSection(
+                          linkedMedicineSummary: item.linkedMedicineSummary,
+                          preMealSummary: item.preMealSummary,
+                        ),
                       ),
                     );
                   },

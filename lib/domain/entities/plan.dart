@@ -10,18 +10,44 @@ class DietPlan extends Equatable {
     required this.localeCode,
     required this.targetKcal,
     required this.meals,
+    this.description,
+    this.imagePath,
   });
 
   final BmiCategory bmiCategory;
   final String localeCode;
   final int targetKcal;
   final List<DietMeal> meals;
+  final String? description;
+  final String? imagePath;
+
+  DietPlan copyWith({
+    BmiCategory? bmiCategory,
+    String? localeCode,
+    int? targetKcal,
+    List<DietMeal>? meals,
+    String? description,
+    bool clearDescription = false,
+    String? imagePath,
+    bool clearImagePath = false,
+  }) {
+    return DietPlan(
+      bmiCategory: bmiCategory ?? this.bmiCategory,
+      localeCode: localeCode ?? this.localeCode,
+      targetKcal: targetKcal ?? this.targetKcal,
+      meals: meals ?? this.meals,
+      description: clearDescription ? null : (description ?? this.description),
+      imagePath: clearImagePath ? null : (imagePath ?? this.imagePath),
+    );
+  }
 
   Map<String, dynamic> toMap() => {
         'bmiCategory': bmiCategory.name,
         'localeCode': localeCode,
         'targetKcal': targetKcal,
         'meals': meals.map((e) => e.toMap()).toList(),
+        if (description != null) 'description': description,
+        if (imagePath != null) 'imagePath': imagePath,
       };
 
   factory DietPlan.fromMap(Map<String, dynamic> m) => DietPlan(
@@ -33,10 +59,13 @@ class DietPlan extends Equatable {
                 ?.map((e) => DietMeal.fromMap(Map<String, dynamic>.from(e as Map)))
                 .toList() ??
             const [],
+        description: m['description'] as String?,
+        imagePath: m['imagePath'] as String?,
       );
 
   @override
-  List<Object?> get props => [bmiCategory, localeCode, targetKcal, meals];
+  List<Object?> get props =>
+      [bmiCategory, localeCode, targetKcal, meals, description, imagePath];
 }
 
 class DietMeal extends Equatable {
@@ -60,16 +89,40 @@ class ExercisePlan extends Equatable {
     required this.bmiCategory,
     required this.localeCode,
     required this.items,
+    this.description,
+    this.imagePath,
   });
 
   final BmiCategory bmiCategory;
   final String localeCode;
   final List<ExerciseItem> items;
+  final String? description;
+  final String? imagePath;
+
+  ExercisePlan copyWith({
+    BmiCategory? bmiCategory,
+    String? localeCode,
+    List<ExerciseItem>? items,
+    String? description,
+    bool clearDescription = false,
+    String? imagePath,
+    bool clearImagePath = false,
+  }) {
+    return ExercisePlan(
+      bmiCategory: bmiCategory ?? this.bmiCategory,
+      localeCode: localeCode ?? this.localeCode,
+      items: items ?? this.items,
+      description: clearDescription ? null : (description ?? this.description),
+      imagePath: clearImagePath ? null : (imagePath ?? this.imagePath),
+    );
+  }
 
   Map<String, dynamic> toMap() => {
         'bmiCategory': bmiCategory.name,
         'localeCode': localeCode,
         'items': items.map((e) => e.toMap()).toList(),
+        if (description != null) 'description': description,
+        if (imagePath != null) 'imagePath': imagePath,
       };
 
   factory ExercisePlan.fromMap(Map<String, dynamic> m) => ExercisePlan(
@@ -81,10 +134,13 @@ class ExercisePlan extends Equatable {
                     ExerciseItem.fromMap(Map<String, dynamic>.from(e as Map)))
                 .toList() ??
             const [],
+        description: m['description'] as String?,
+        imagePath: m['imagePath'] as String?,
       );
 
   @override
-  List<Object?> get props => [bmiCategory, localeCode, items];
+  List<Object?> get props =>
+      [bmiCategory, localeCode, items, description, imagePath];
 }
 
 class ExerciseItem extends Equatable {

@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../../../core/data/local_store.dart';
 import '../../../core/utils/bmi_calculator.dart';
 import '../../../domain/entities/plan.dart';
 import '../../../domain/entities/user_profile.dart';
@@ -23,6 +25,7 @@ class BmiPlanController extends GetxController {
   final LocaleController _locale;
   final BmiCalculator _calc;
   final PlanGenerator _planner;
+  final ImagePicker _picker = ImagePicker();
 
   // Inputs
   final height = 165.0.obs;
@@ -44,12 +47,38 @@ class BmiPlanController extends GetxController {
 
   Future<void> _prefill() async {
     final p = (await _profiles.get()).valueOrNull;
-    if (p == null) return;
-    if (p.heightCm != null) height.value = p.heightCm!;
-    if (p.weightKg != null) weight.value = p.weightKg!;
-    if (p.age != null) age.value = p.age!;
-    if (p.sex != null) sex.value = p.sex!;
-    if (p.activityLevel != null) activity.value = p.activityLevel!;
+    if (p != null) {
+      if (p.heightCm != null) height.value = p.heightCm!;
+      if (p.weightKg != null) weight.value = p.weightKg!;
+      if (p.age != null) age.value = p.age!;
+      if (p.sex != null) sex.value = p.sex!;
+      if (p.activityLevel != null) activity.value = p.activityLevel!;
+      if (p.bmi != null && p.bmiCategory != null) {
+        result.value = BmiResult(
+          bmi: p.bmi!,
+          category: p.bmiCategory!,
+          maintenanceKcal: 2000,
+        );
+      }
+    }
+    _loadSavedPlans();
+  }
+
+  void _loadSavedPlans() {
+    if (!LocalStore.instance.isReady) return;
+    final rawDiet = LocalStore.instance.singletons.get('diet_plan');
+    if (rawDiet != null) {
+      try {
+        diet.value = DietPlan.fromMap(LocalStore.normalize(rawDiet));
+      } catch (_) {}
+    }
+
+    final rawExercise = LocalStore.instance.singletons.get('exercise_plan');
+    if (rawExercise != null) {
+      try {
+        exercise.value = ExercisePlan.fromMap(LocalStore.normalize(rawExercise));
+      } catch (_) {}
+    }
   }
 
   Future<void> compute() async {
@@ -63,13 +92,28 @@ class BmiPlanController extends GetxController {
     result.value = r;
 
     final locale = _locale.locale.value.languageCode;
-    diet.value = _planner.diet(
+    final generatedDiet = _planner.diet(
       category: r.category,
       localeCode: locale,
       maintenanceKcal: r.maintenanceKcal,
     );
-    exercise.value =
+    final existingDiet = diet.value;
+    final finalDiet = generatedDiet.copyWith(
+      description: existingDiet?.description,
+      imagePath: existingDiet?.imagePath,
+    );
+    diet.value = finalDiet;
+    await LocalStore.instance.singletons.put('diet_plan', finalDiet.toMap());
+
+    final generatedExercise =
         _planner.exercise(category: r.category, localeCode: locale);
+    final existingExercise = exercise.value;
+    final finalExercise = generatedExercise.copyWith(
+      description: existingExercise?.description,
+      imagePath: existingExercise?.imagePath,
+    );
+    exercise.value = finalExercise;
+    await LocalStore.instance.singletons.put('exercise_plan', finalExercise.toMap());
 
     // Cache BMI on the profile.
     final p = (await _profiles.get()).valueOrNull ?? const UserProfile(id: 'me');
@@ -82,5 +126,50 @@ class BmiPlanController extends GetxController {
       bmi: r.bmi,
       bmiCategory: r.category,
     ));
+  }
+
+  Future<String?> pickImage(ImageSource source) async {
+    try {
+      final XFile? file = await _picker.pickImage(source: source);
+      return file?.path;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveDietDetails({
+    String? description,
+    bool clearDescription = false,
+    String? imagePath,
+    bool clearImagePath = false,
+  }) async {
+    final current = diet.value;
+    if (current == null) return;
+    final updated = current.copyWith(
+      description: description,
+      clearDescription: clearDescription,
+      imagePath: imagePath,
+      clearImagePath: clearImagePath,
+    );
+    diet.value = updated;
+    await LocalStore.instance.singletons.put('diet_plan', updated.toMap());
+  }
+
+  Future<void> saveExerciseDetails({
+    String? description,
+    bool clearDescription = false,
+    String? imagePath,
+    bool clearImagePath = false,
+  }) async {
+    final current = exercise.value;
+    if (current == null) return;
+    final updated = current.copyWith(
+      description: description,
+      clearDescription: clearDescription,
+      imagePath: imagePath,
+      clearImagePath: clearImagePath,
+    );
+    exercise.value = updated;
+    await LocalStore.instance.singletons.put('exercise_plan', updated.toMap());
   }
 }
