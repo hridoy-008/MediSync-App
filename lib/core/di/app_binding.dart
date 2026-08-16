@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/bmi_plan/presentation/bmi_plan_controller.dart';
+import '../../features/dashboard/presentation/activity_history_controller.dart';
 import '../../features/dashboard/presentation/dashboard_controller.dart';
 import '../../features/onboarding/presentation/onboarding_controller.dart';
 import '../../features/prescription/presentation/prescription_flow_controller.dart';
@@ -37,6 +38,13 @@ class AppBinding extends Bindings {
         reminderRepository: Get.find<ReminderRepository>(),
         profileRepository: Get.find<ProfileRepository>(),
         reminderService: Get.find<ReminderService>(),
+      ),
+      fenix: true,
+    );
+
+    Get.lazyPut<ActivityHistoryController>(
+      () => ActivityHistoryController(
+        reminderRepository: Get.find<ReminderRepository>(),
       ),
       fenix: true,
     );

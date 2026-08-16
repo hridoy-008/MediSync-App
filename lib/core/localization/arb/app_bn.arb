@@ -140,6 +140,12 @@
   "editExerciseTime": "সময় সম্পাদনা করুন",
   "exerciseDuration": "সময়কাল (মিনিট)",
   "exerciseName": "ব্যায়ামের নাম",
+  "activityHistory": "কার্যকলাপের ইতিহাস",
+  "filter7Days": "৭ দিন",
+  "filter15Days": "১৫ দিন",
+  "filterAll": "সব সময়",
+  "noActivityLogs": "এখনো কোনো ইতিহাস রেকর্ড করা হয়নি।",
+  "adherenceRate": "মেনে চলার হার",
 
   "profileTitle": "প্রোফাইল",
   "language": "ভাষা",

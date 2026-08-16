@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../features/auth/presentation/auth_page.dart';
+import '../../features/dashboard/presentation/activity_history_page.dart';
 import '../../features/dashboard/presentation/home_shell.dart';
 import '../../features/onboarding/presentation/onboarding_page.dart';
 import '../../features/prescription/presentation/capture_page.dart';
@@ -28,5 +29,8 @@ class AppPages {
         name: AppRoutes.hydrationConfig,
         page: () => const HydrationConfigPage()),
     GetPage(name: AppRoutes.sleepConfig, page: () => const SleepConfigPage()),
+    GetPage(
+        name: AppRoutes.activityHistory,
+        page: () => const ActivityHistoryPage()),
   ];
 }

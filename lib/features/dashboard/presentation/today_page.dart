@@ -100,9 +100,24 @@ class TodayPage extends GetView<DashboardController> {
                     AppSpacing.xxl,
                   ),
                   child: AppCard(
-                    child: AdherenceHeatmap(
-                      logs: controller.logs,
-                      isBangla: bangla,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AdherenceHeatmap(
+                          logs: controller.logs,
+                          isBangla: bangla,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                            onPressed: () =>
+                                Get.toNamed(AppRoutes.activityHistory),
+                            icon: const Icon(Icons.history, size: 18),
+                            label: Text(l.activityHistory),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

@@ -140,6 +140,12 @@
   "editExerciseTime": "Edit duration",
   "exerciseDuration": "Duration (mins)",
   "exerciseName": "Exercise name",
+  "activityHistory": "Activity history",
+  "filter7Days": "7 Days",
+  "filter15Days": "15 Days",
+  "filterAll": "All time",
+  "noActivityLogs": "No activity history recorded yet.",
+  "adherenceRate": "Adherence rate",
 
   "profileTitle": "Profile",
   "language": "Language",
