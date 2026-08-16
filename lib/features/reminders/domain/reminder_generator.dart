@@ -1,3 +1,4 @@
+import '../../../core/utils/bangla_numerals.dart';
 import '../../../core/utils/recurrence.dart';
 import '../../../domain/entities/configs.dart';
 import '../../../domain/entities/prescription.dart';
@@ -8,6 +9,21 @@ import '../../../domain/enums.dart';
 /// medical data + habit configs into [Reminder]s. No I/O.
 class ReminderGenerator {
   const ReminderGenerator();
+
+  static final _tripleDoseRegex =
+      RegExp(r'([\d০-৯])\s*[+\-x ]\s*([\d০-৯])\s*[+\-x ]\s*([\d০-৯])');
+
+  List<int>? _parseTripleDosePattern(String text) {
+    if (text.isEmpty) return null;
+    final normalized = BanglaNumerals.toWestern(text);
+    final match = _tripleDoseRegex.firstMatch(normalized);
+    if (match == null) return null;
+    final s1 = int.tryParse(match.group(1) ?? '0') ?? 0;
+    final s2 = int.tryParse(match.group(2) ?? '0') ?? 0;
+    final s3 = int.tryParse(match.group(3) ?? '0') ?? 0;
+    if (s1 == 0 && s2 == 0 && s3 == 0) return null;
+    return [s1, s2, s3];
+  }
 
   /// Build medicine reminders from a confirmed prescription, anchoring
   /// food-relative doses to the user's meal times (PRD P0-6).
@@ -60,10 +76,33 @@ class ReminderGenerator {
   /// Choose N daily times. If food-relative + meals exist, anchor to meals
   /// (±15 min); else spread sensibly across waking hours.
   List<int> _timesForMedicine(Medicine med, List<MealConfig> meals) {
-    final freq = med.frequencyPerDay.clamp(1, 6);
     final enabledMeals = meals.where((m) => m.enabled).toList()
       ..sort((a, b) => a.minutesFromMidnight.compareTo(b.minutesFromMidnight));
 
+    // 1. Try triple dose pattern parsing from med.dose or med.notes
+    final pattern = _parseTripleDosePattern(med.dose) ??
+        _parseTripleDosePattern(med.notes);
+
+    if (pattern != null && enabledMeals.isNotEmpty) {
+      final offset = switch (med.timing) {
+        FoodTiming.beforeFood => -15,
+        FoodTiming.afterFood => 15,
+        FoodTiming.withFood => 0,
+        FoodTiming.anyTime => 0,
+      };
+
+      final times = <int>[];
+      for (var i = 0; i < 3; i++) {
+        if (pattern[i] > 0 && i < enabledMeals.length) {
+          final mealMins = enabledMeals[i].minutesFromMidnight;
+          times.add((mealMins + offset).clamp(0, 24 * 60 - 1));
+        }
+      }
+      if (times.isNotEmpty) return times;
+    }
+
+    // 2. Existing fallback logic
+    final freq = med.frequencyPerDay.clamp(1, 6);
     if (med.timing != FoodTiming.anyTime && enabledMeals.isNotEmpty) {
       final offset = med.timing == FoodTiming.beforeFood ? -15 : 15;
       final anchored = enabledMeals

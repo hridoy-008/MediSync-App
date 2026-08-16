@@ -189,4 +189,84 @@ void main() {
       expect(preRem.recurrence.timesOfDay, [975]); // 4:15 PM
     });
   });
+
+  group('Requirement 10: Prescription Dosage Pattern Scheduling', () {
+    final defaultMeals = [
+      const MealConfig(id: 'b', mealType: MealType.breakfast, minutesFromMidnight: 8 * 60),  // 480
+      const MealConfig(id: 'l', mealType: MealType.lunch, minutesFromMidnight: 14 * 60),    // 840
+      const MealConfig(id: 'd', mealType: MealType.dinner, minutesFromMidnight: 21 * 60),   // 1260
+    ];
+
+    test('1+1+1 maps to Breakfast, Lunch, and Dinner', () {
+      final reminders = gen.fromPrescription(
+        rx([const Medicine(id: 'm1', name: 'Napa', dose: '1+1+1', timing: FoodTiming.withFood)]),
+        defaultMeals,
+      );
+      expect(reminders.single.recurrence.timesOfDay, [480, 840, 1260]);
+    });
+
+    test('1+0+1 maps to Breakfast and Dinner', () {
+      final reminders = gen.fromPrescription(
+        rx([const Medicine(id: 'm1', name: 'Napa', dose: '1+0+1', timing: FoodTiming.withFood)]),
+        defaultMeals,
+      );
+      expect(reminders.single.recurrence.timesOfDay, [480, 1260]);
+    });
+
+    test('1+1+0 maps to Breakfast and Lunch', () {
+      final reminders = gen.fromPrescription(
+        rx([const Medicine(id: 'm1', name: 'Napa', dose: '1+1+0', timing: FoodTiming.withFood)]),
+        defaultMeals,
+      );
+      expect(reminders.single.recurrence.timesOfDay, [480, 840]);
+    });
+
+    test('0+1+1 maps to Lunch and Dinner', () {
+      final reminders = gen.fromPrescription(
+        rx([const Medicine(id: 'm1', name: 'Napa', dose: '0+1+1', timing: FoodTiming.withFood)]),
+        defaultMeals,
+      );
+      expect(reminders.single.recurrence.timesOfDay, [840, 1260]);
+    });
+
+    test('0+0+1 maps to Dinner only', () {
+      final reminders = gen.fromPrescription(
+        rx([const Medicine(id: 'm1', name: 'Napa', dose: '0+0+1', timing: FoodTiming.withFood)]),
+        defaultMeals,
+      );
+      expect(reminders.single.recurrence.timesOfDay, [1260]);
+    });
+
+    test('1-0-1 with dash separator maps to Breakfast and Dinner', () {
+      final reminders = gen.fromPrescription(
+        rx([const Medicine(id: 'm1', name: 'Napa', dose: '1-0-1', timing: FoodTiming.withFood)]),
+        defaultMeals,
+      );
+      expect(reminders.single.recurrence.timesOfDay, [480, 1260]);
+    });
+
+    test('Bangla ১+১+১ maps to Breakfast, Lunch, and Dinner', () {
+      final reminders = gen.fromPrescription(
+        rx([const Medicine(id: 'm1', name: 'Napa', dose: '১+১+১', timing: FoodTiming.withFood)]),
+        defaultMeals,
+      );
+      expect(reminders.single.recurrence.timesOfDay, [480, 840, 1260]);
+    });
+
+    test('Food-timing offset (afterFood +15 min) applies to pattern slots', () {
+      final reminders = gen.fromPrescription(
+        rx([const Medicine(id: 'm1', name: 'Napa', dose: '1+0+1', timing: FoodTiming.afterFood)]),
+        defaultMeals,
+      );
+      expect(reminders.single.recurrence.timesOfDay, [480 + 15, 1260 + 15]);
+    });
+
+    test('Fallback to frequency spread when no triple pattern exists', () {
+      final reminders = gen.fromPrescription(
+        rx([const Medicine(id: 'm1', name: 'Napa', dose: '500 mg', frequencyPerDay: 2, timing: FoodTiming.anyTime)]),
+        defaultMeals,
+      );
+      expect(reminders.single.recurrence.timesOfDay, [9 * 60, 21 * 60]);
+    });
+  });
 }
