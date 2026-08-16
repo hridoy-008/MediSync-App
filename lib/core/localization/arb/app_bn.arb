@@ -146,6 +146,13 @@
   "filterAll": "সব সময়",
   "noActivityLogs": "এখনো কোনো ইতিহাস রেকর্ড করা হয়নি।",
   "adherenceRate": "মেনে চলার হার",
+  "waterTracker": "পানি পানের ট্র্যাকার",
+  "glasses": "গ্লাস",
+  "remainingGlasses": "আর {count} গ্লাস বাকি",
+  "@remainingGlasses": { "placeholders": { "count": {} } },
+  "goalReached": "দৈনিক লক্ষ্য অর্জিত! 🎉",
+  "addGlass": "গ্লাস যোগ করুন",
+  "removeGlass": "গ্লাস কমান",
 
   "profileTitle": "প্রোফাইল",
   "language": "ভাষা",

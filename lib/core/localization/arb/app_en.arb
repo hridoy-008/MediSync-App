@@ -146,6 +146,13 @@
   "filterAll": "All time",
   "noActivityLogs": "No activity history recorded yet.",
   "adherenceRate": "Adherence rate",
+  "waterTracker": "Water tracker",
+  "glasses": "glasses",
+  "remainingGlasses": "{count} glasses remaining",
+  "@remainingGlasses": { "placeholders": { "count": {} } },
+  "goalReached": "Daily goal reached! 🎉",
+  "addGlass": "Add glass",
+  "removeGlass": "Remove glass",
 
   "profileTitle": "Profile",
   "language": "Language",

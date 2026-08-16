@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 
+import '../../../core/data/local_store.dart';
+import '../../../domain/entities/configs.dart';
 import '../../../domain/entities/reminder.dart';
 import '../../../domain/entities/user_profile.dart';
 import '../../../domain/enums.dart';
@@ -38,6 +40,17 @@ class DashboardController extends GetxController {
   final Rxn<TimelineItem> nextUp = Rxn<TimelineItem>();
   final logs = <ReminderLog>[].obs;
 
+  // Requirement 8: Water Tracker
+  final waterConsumedGlasses = 0.obs;
+  final waterTargetGlasses = 10.obs;
+
+  String _todayWaterKey() {
+    final now = DateTime.now();
+    final monthStr = now.month.toString().padLeft(2, '0');
+    final dayStr = now.day.toString().padLeft(2, '0');
+    return 'water_log_${now.year}-$monthStr-$dayStr';
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -66,7 +79,40 @@ class DashboardController extends GetxController {
     doneCount.value = a.done;
     totalCount.value = a.total;
     nextUp.value = _builder.nextUp(items, DateTime.now());
+    await _loadWaterTracker();
     loading.value = false;
+  }
+
+  Future<void> _loadWaterTracker() async {
+    final hydration = (await _config.getHydration()).valueOrNull ?? const HydrationConfig();
+    final targetMl = hydration.dailyTargetMl;
+    waterTargetGlasses.value = (targetMl / 250).round().clamp(1, 99);
+
+    if (LocalStore.instance.isReady) {
+      final rawConsumed = LocalStore.instance.singletons.get(_todayWaterKey());
+      if (rawConsumed != null && rawConsumed is num) {
+        waterConsumedGlasses.value = rawConsumed.toInt();
+      } else {
+        waterConsumedGlasses.value = 0;
+      }
+    }
+  }
+
+  Future<void> incrementWater() async {
+    waterConsumedGlasses.value++;
+    if (LocalStore.instance.isReady) {
+      await LocalStore.instance.singletons
+          .put(_todayWaterKey(), waterConsumedGlasses.value);
+    }
+  }
+
+  Future<void> decrementWater() async {
+    if (waterConsumedGlasses.value <= 0) return;
+    waterConsumedGlasses.value--;
+    if (LocalStore.instance.isReady) {
+      await LocalStore.instance.singletons
+          .put(_todayWaterKey(), waterConsumedGlasses.value);
+    }
   }
 
   Future<void> act(TimelineItem item, ReminderAction action) async {

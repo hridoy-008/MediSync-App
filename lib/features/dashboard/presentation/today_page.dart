@@ -97,6 +97,17 @@ class TodayPage extends GetView<DashboardController> {
                     AppSpacing.md,
                     AppSpacing.md,
                     AppSpacing.md,
+                    0,
+                  ),
+                  child: _WaterTrackerCard(l: l),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.md,
                     AppSpacing.xxl,
                   ),
                   child: AppCard(
@@ -165,5 +176,104 @@ class _Header extends GetView<DashboardController> {
         );
       }),
     );
+  }
+}
+
+class _WaterTrackerCard extends GetView<DashboardController> {
+  const _WaterTrackerCard({required this.l});
+  final AppLocalizations l;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final consumed = controller.waterConsumedGlasses.value;
+      final target = controller.waterTargetGlasses.value;
+      final remaining = (target - consumed).clamp(0, 999);
+      final isComplete = consumed >= target;
+      final progress = target == 0 ? 0.0 : (consumed / target).clamp(0.0, 1.0);
+
+      return AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.water_drop, color: context.colors.primary, size: 22),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(l.waterTracker, style: Theme.of(context).textTheme.titleMedium),
+                  ],
+                ),
+                Text(
+                  '$consumed / $target ${l.glasses}',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: context.colors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 8,
+                backgroundColor: context.colors.surfaceVariant,
+                valueColor: AlwaysStoppedAnimation(
+                  isComplete ? context.colors.success : context.colors.primary,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (isComplete)
+                  Row(
+                    children: [
+                      Icon(Icons.check_circle, color: context.colors.success, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        l.goalReached,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: context.colors.success,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  )
+                else
+                  Text(
+                    l.remainingGlasses(remaining),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline, size: 20),
+                      tooltip: l.removeGlass,
+                      onPressed: consumed > 0 ? controller.decrementWater : null,
+                    ),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: controller.incrementWater,
+                      icon: const Icon(Icons.add, size: 16),
+                      label: Text(l.addGlass),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
