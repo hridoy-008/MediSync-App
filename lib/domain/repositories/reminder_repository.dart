@@ -16,5 +16,6 @@ abstract interface class ReminderRepository {
   Future<Result<List<ReminderLog>>> getLogs({DateTime? from, DateTime? to});
   Future<Result<ReminderLog?>> getLog(String id);
   Future<Result<void>> upsertLog(ReminderLog log);
+  Future<Result<void>> deleteLog(String id);
   Stream<List<ReminderLog>> watchLogs();
 }

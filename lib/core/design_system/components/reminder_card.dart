@@ -25,6 +25,10 @@ class ReminderCard extends StatelessWidget {
     this.stockCount,
     this.isLowStock = false,
     this.mealDetails,
+    this.completedCount,
+    this.targetCount,
+    this.onIncrement,
+    this.onDecrement,
   });
 
   final ReminderType type;
@@ -42,6 +46,10 @@ class ReminderCard extends StatelessWidget {
   final int? stockCount;
   final bool isLowStock;
   final Widget? mealDetails;
+  final int? completedCount;
+  final int? targetCount;
+  final VoidCallback? onIncrement;
+  final VoidCallback? onDecrement;
 
   @override
   Widget build(BuildContext context) {
@@ -119,6 +127,49 @@ class ReminderCard extends StatelessWidget {
               _TimeAndStatus(timeLabel: timeLabel, status: status),
             ],
           ),
+          if (completedCount != null && targetCount != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Taken: $completedCount / $targetCount',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline, size: 20),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      tooltip: 'Remove dose',
+                      onPressed: (completedCount! > 0) ? onDecrement : null,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Text(
+                        '$completedCount',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle_outline, size: 20),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      tooltip: 'Add dose',
+                      onPressed: (completedCount! < targetCount!) ? onIncrement : null,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
           if (mealDetails != null) mealDetails!,
           if (pending && (onTaken != null || onSnooze != null || onSkip != null)) ...[
             const SizedBox(height: AppSpacing.sm),

@@ -124,6 +124,62 @@ class DashboardController extends GetxController {
     await loadToday();
   }
 
+  // Requirement 11: Medicine Dose Counter (+ / -)
+  int getMedicineTargetCount(String reminderId) {
+    final medicineItems =
+        timeline.where((i) => i.reminder.id == reminderId).toList();
+    if (medicineItems.isNotEmpty) return medicineItems.length;
+    final item = timeline.firstWhereOrNull((i) => i.reminder.id == reminderId);
+    return item?.reminder.recurrence.timesOfDay.length ?? 1;
+  }
+
+  int getMedicineCompletedCount(String reminderId) {
+    return timeline
+        .where((i) =>
+            i.reminder.id == reminderId && i.status == ReminderStatus.taken)
+        .length;
+  }
+
+  Future<void> incrementMedicineDose(String reminderId) async {
+    final pendingItem = timeline.firstWhereOrNull(
+      (i) => i.reminder.id == reminderId && i.status == ReminderStatus.pending,
+    );
+    if (pendingItem != null) {
+      await act(pendingItem, ReminderAction.taken);
+    } else {
+      final nonTakenItem = timeline.firstWhereOrNull(
+        (i) => i.reminder.id == reminderId && i.status != ReminderStatus.taken,
+      );
+      if (nonTakenItem != null) {
+        await act(nonTakenItem, ReminderAction.taken);
+      }
+    }
+  }
+
+  Future<void> decrementMedicineDose(String reminderId) async {
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final todayEnd = todayStart.add(const Duration(days: 1));
+
+    final todayLogs = logs
+        .where((l) =>
+            l.reminderId == reminderId &&
+            l.action == ReminderAction.taken &&
+            !l.scheduledTime.isBefore(todayStart) &&
+            l.scheduledTime.isBefore(todayEnd))
+        .toList()
+      ..sort((a, b) {
+        final timeA = a.confirmedAt ?? a.scheduledTime;
+        final timeB = b.confirmedAt ?? b.scheduledTime;
+        return timeB.compareTo(timeA);
+      });
+
+    if (todayLogs.isNotEmpty) {
+      await _reminders.deleteLog(todayLogs.first.id);
+      await loadToday();
+    }
+  }
+
   /// Called on app open (and from the foreground notification callback).
   Future<void> onResume() async {
     await _service.refreshSchedule();

@@ -143,6 +143,17 @@ class ReminderRepositoryImpl implements ReminderRepository {
   }
 
   @override
+  Future<Result<void>> deleteLog(String id) async {
+    try {
+      await _store.logs.delete(id);
+      unawaited(_mirror.delete(_logs, id));
+      return const Success(null);
+    } catch (e) {
+      return Err(Failure.cache(e));
+    }
+  }
+
+  @override
   Stream<List<ReminderLog>> watchLogs() async* {
     yield _allLogs();
     yield* _store.logs.watch().asyncMap((_) async => _allLogs());

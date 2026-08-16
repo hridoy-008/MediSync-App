@@ -54,6 +54,14 @@ class TodayPage extends GetView<DashboardController> {
                             item.scheduledTime &&
                         controller.nextUp.value?.reminder.id ==
                             item.reminder.id;
+                    final isMedicine = item.type == ReminderType.medicine;
+                    final targetCount = isMedicine
+                        ? controller.getMedicineTargetCount(item.reminder.id)
+                        : null;
+                    final completedCount = isMedicine
+                        ? controller.getMedicineCompletedCount(item.reminder.id)
+                        : null;
+
                     return Padding(
                       padding: EdgeInsets.fromLTRB(
                         AppSpacing.md,
@@ -83,6 +91,16 @@ class TodayPage extends GetView<DashboardController> {
                             : null,
                         stockCount: item.reminder.stockCount,
                         isLowStock: item.reminder.isLowStock,
+                        completedCount: completedCount,
+                        targetCount: targetCount,
+                        onIncrement: isMedicine
+                            ? () => controller
+                                .incrementMedicineDose(item.reminder.id)
+                            : null,
+                        onDecrement: isMedicine
+                            ? () => controller
+                                .decrementMedicineDose(item.reminder.id)
+                            : null,
                         mealDetails: MealDetailsSection(
                           linkedMedicineSummary: item.linkedMedicineSummary,
                           preMealSummary: item.preMealSummary,
