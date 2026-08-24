@@ -5,6 +5,7 @@ import '../../features/dashboard/presentation/activity_history_page.dart';
 import '../../features/dashboard/presentation/home_shell.dart';
 import '../../features/onboarding/presentation/onboarding_page.dart';
 import '../../features/prescription/presentation/capture_page.dart';
+import '../../features/prescription/presentation/low_stock_page.dart';
 import '../../features/prescription/presentation/processing_page.dart';
 import '../../features/prescription/presentation/review_page.dart';
 import '../../features/prescription/presentation/schedule_preview_page.dart';
@@ -24,6 +25,7 @@ class AppPages {
     GetPage(
         name: AppRoutes.schedulePreview,
         page: () => const SchedulePreviewPage()),
+    GetPage(name: AppRoutes.lowStock, page: () => const LowStockPage()),
     GetPage(name: AppRoutes.mealConfig, page: () => const MealConfigPage()),
     GetPage(
         name: AppRoutes.hydrationConfig,

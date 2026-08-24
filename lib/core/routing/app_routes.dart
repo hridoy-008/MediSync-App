@@ -8,6 +8,7 @@ abstract class AppRoutes {
   static const review = '/prescription/review';
   static const schedulePreview = '/prescription/schedule-preview';
   static const prescriptionDetail = '/prescription/detail';
+  static const lowStock = '/prescription/low-stock';
   static const mealConfig = '/reminders/meals';
   static const hydrationConfig = '/reminders/water';
   static const sleepConfig = '/reminders/sleep';

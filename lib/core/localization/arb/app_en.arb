@@ -192,5 +192,14 @@
 
   "medicalDisclaimer": "For informational purposes only; not a substitute for professional medical advice.",
   "showDetails": "Show details",
-  "hideDetails": "Hide details"
+  "hideDetails": "Hide details",
+
+  "lowStockTitle": "Low Stock Inventory",
+  "noLowStockTitle": "No medicines low in stock",
+  "noLowStockBody": "All your tracked medicine stocks are healthy.",
+  "stockLeft": "{count} left",
+  "@stockLeft": { "placeholders": { "count": {} } },
+  "alertThreshold": "Alert at {count}",
+  "@alertThreshold": { "placeholders": { "count": {} } },
+  "outOfStock": "Out of Stock / 0 left"
 }

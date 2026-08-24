@@ -192,5 +192,14 @@
 
   "medicalDisclaimer": "শুধুমাত্র তথ্যের জন্য; এটি পেশাদার চিকিৎসা পরামর্শের বিকল্প নয়।",
   "showDetails": "বিবরণ দেখুন",
-  "hideDetails": "বিবরণ লুকান"
+  "hideDetails": "বিবরণ লুকান",
+
+  "lowStockTitle": "কম স্টকের ওষুধ",
+  "noLowStockTitle": "কোনো ওষুধের স্টক কম নেই",
+  "noLowStockBody": "আপনার সব ওষুধের স্টক পর্যাপ্ত আছে।",
+  "stockLeft": "{count}টি বাকি",
+  "@stockLeft": { "placeholders": { "count": {} } },
+  "alertThreshold": "সীমা: {count}টি",
+  "@alertThreshold": { "placeholders": { "count": {} } },
+  "outOfStock": "স্টক শেষ / ০টি বাকি"
 }

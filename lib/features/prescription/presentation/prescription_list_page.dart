@@ -22,24 +22,104 @@ class PrescriptionListPage extends GetView<PrescriptionListController> {
         child: Obx(() {
           if (controller.loading.value) return const LoadingState();
           final items = controller.items;
-          if (items.isEmpty) {
-            return EmptyState(
-              icon: Icons.description_outlined,
-              title: l.emptyPrescriptionsTitle,
-              message: l.emptyPrescriptionsBody,
-              actionLabel: l.addPrescription,
-              onAction: () => Get.toNamed(AppRoutes.capture),
-            );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
-            itemBuilder: (context, i) => _PrescriptionTile(
-              prescription: items[i],
-              bangla: bangla,
-              onDelete: () => _confirmDelete(context, items[i]),
-            ),
+          final lowStockCount = controller.lowStockItems.length;
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.xs),
+                child: InkWell(
+                  onTap: () => Get.toNamed(AppRoutes.lowStock),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
+                    decoration: BoxDecoration(
+                      color: lowStockCount > 0
+                          ? context.colors.danger.withOpacity(0.08)
+                          : context.colors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
+                        color: lowStockCount > 0
+                            ? context.colors.danger.withOpacity(0.3)
+                            : context.colors.outline,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.inventory_2_outlined,
+                          color: lowStockCount > 0
+                              ? context.colors.danger
+                              : context.colors.primary,
+                          size: 22,
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            l.lowStockTitle,
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                        ),
+                        if (lowStockCount > 0) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: context.colors.danger,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              bangla
+                                  ? BanglaNumerals.toBangla(lowStockCount)
+                                  : lowStockCount.toString(),
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                        Icon(
+                          Icons.chevron_right,
+                          color: context.colors.onSurfaceMuted,
+                          size: 20,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: items.isEmpty
+                    ? EmptyState(
+                        icon: Icons.description_outlined,
+                        title: l.emptyPrescriptionsTitle,
+                        message: l.emptyPrescriptionsBody,
+                        actionLabel: l.addPrescription,
+                        onAction: () => Get.toNamed(AppRoutes.capture),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        itemCount: items.length,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: AppSpacing.sm),
+                        itemBuilder: (context, i) => _PrescriptionTile(
+                          prescription: items[i],
+                          bangla: bangla,
+                          onDelete: () => _confirmDelete(context, items[i]),
+                        ),
+                      ),
+              ),
+            ],
           );
         }),
       ),

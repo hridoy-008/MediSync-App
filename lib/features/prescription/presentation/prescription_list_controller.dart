@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../../core/notifications/reminder_scheduler.dart';
 import '../../../domain/entities/prescription.dart';
+import '../../../domain/entities/reminder.dart';
 import '../../../domain/repositories/prescription_repository.dart';
 import '../../../domain/repositories/reminder_repository.dart';
 
@@ -20,6 +21,7 @@ class PrescriptionListController extends GetxController {
 
   final loading = true.obs;
   final items = <Prescription>[].obs;
+  final lowStockItems = <Reminder>[].obs;
 
   @override
   void onInit() {
@@ -27,6 +29,19 @@ class PrescriptionListController extends GetxController {
     _repo.watchAll().listen((list) {
       items.assignAll(list);
       loading.value = false;
+    });
+
+    _reminders.watchAll().listen((list) {
+      final filtered = list.where((r) => r.isLowStock).toList();
+      final unique = <String, Reminder>{};
+      for (final r in filtered) {
+        final key = r.title.trim().toLowerCase();
+        if (!unique.containsKey(key) ||
+            (r.stockCount ?? 0) < (unique[key]!.stockCount ?? 0)) {
+          unique[key] = r;
+        }
+      }
+      lowStockItems.assignAll(unique.values.toList());
     });
   }
 
