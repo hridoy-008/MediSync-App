@@ -201,5 +201,12 @@
   "@stockLeft": { "placeholders": { "count": {} } },
   "alertThreshold": "Alert at {count}",
   "@alertThreshold": { "placeholders": { "count": {} } },
-  "outOfStock": "Out of Stock / 0 left"
+  "outOfStock": "Out of Stock / 0 left",
+
+  "lowStockNotificationTitle": "Low Stock Alert",
+  "lowStockNotificationBody": "{name} is running low ({count} left). Tap to view inventory.",
+  "@lowStockNotificationBody": { "placeholders": { "name": {}, "count": {} } },
+  "outOfStockNotificationTitle": "Out of Stock Alert",
+  "outOfStockNotificationBody": "{name} is out of stock (0 left). Please refill immediately.",
+  "@outOfStockNotificationBody": { "placeholders": { "name": {} } }
 }

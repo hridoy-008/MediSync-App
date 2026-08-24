@@ -108,10 +108,27 @@ class ReminderService {
 
     if (action == ReminderAction.taken &&
         reminder.stockAlertEnabled &&
-        reminder.stockCount != null) {
+        reminder.stockCount != null &&
+        reminder.lowStockThreshold != null) {
+      final oldStock = reminder.stockCount!;
+      final threshold = reminder.lowStockThreshold!;
       final doseCount = _parseDoseCount(reminder.subtitle);
-      final newStock = (reminder.stockCount! - doseCount).clamp(0, 9999);
-      await _repo.save(reminder.copyWith(stockCount: newStock));
+      final newStock = (oldStock - doseCount).clamp(0, 9999);
+      final updated = reminder.copyWith(stockCount: newStock);
+      await _repo.save(updated);
+
+      final isLowStockTransition =
+          oldStock > threshold && newStock <= threshold && newStock > 0;
+      final isOutOfStockTransition = oldStock > 0 && newStock == 0;
+
+      if (isLowStockTransition || isOutOfStockTransition) {
+        await _scheduler.showLowStockNotification(
+          medicineName: reminder.title,
+          stockCount: newStock,
+          threshold: threshold,
+          isOutOfStock: isOutOfStockTransition,
+        );
+      }
     }
   }
 

@@ -43,12 +43,21 @@ class NotificationChannels {
     importance: Importance.high,
   );
 
+  static const lowStock = AndroidNotificationChannel(
+    'low_stock_channel',
+    'Low stock alerts',
+    description: 'Alerts when medicine inventory is low or out of stock',
+    importance: Importance.high,
+    playSound: true,
+  );
+
   static List<AndroidNotificationChannel> all = const [
     medicine,
     meal,
     water,
     sleep,
     missed,
+    lowStock,
   ];
 
   static AndroidNotificationChannel forType(ReminderType type) =>

@@ -72,6 +72,11 @@ Future<void> main() async {
 
   // 6) Foreground notification taps refresh the Today view and announce voice if enabled.
   appForegroundActionCallback = (payload, actionId) {
+    if (payload.reminderId.startsWith('low_stock_')) {
+      Get.toNamed(AppRoutes.lowStock);
+      return;
+    }
+
     if (Get.isRegistered<DashboardController>()) {
       Get.find<DashboardController>().loadToday();
     }

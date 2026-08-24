@@ -20,4 +20,12 @@ abstract interface class ReminderScheduler {
   Future<void> cancelById(String reminderId);
 
   Future<void> cancelAll();
+
+  /// Post an immediate low-stock or out-of-stock notification banner.
+  Future<void> showLowStockNotification({
+    required String medicineName,
+    required int stockCount,
+    required int threshold,
+    required bool isOutOfStock,
+  });
 }

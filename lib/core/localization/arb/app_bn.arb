@@ -201,5 +201,12 @@
   "@stockLeft": { "placeholders": { "count": {} } },
   "alertThreshold": "সীমা: {count}টি",
   "@alertThreshold": { "placeholders": { "count": {} } },
-  "outOfStock": "স্টক শেষ / ০টি বাকি"
+  "outOfStock": "স্টক শেষ / ০টি বাকি",
+
+  "lowStockNotificationTitle": "কম স্টকের সতর্কতা",
+  "lowStockNotificationBody": "{name}-এর স্টক কমে এসেছে ({count}টি বাকি)। ইনভেন্টরি দেখতে ট্যাপ করুন।",
+  "@lowStockNotificationBody": { "placeholders": { "name": {}, "count": {} } },
+  "outOfStockNotificationTitle": "স্টক শেষের সতর্কতা",
+  "outOfStockNotificationBody": "{name}-এর স্টক শেষ (০টি বাকি)। দ্রুত পুনরায় কিনুন।",
+  "@outOfStockNotificationBody": { "placeholders": { "name": {} } }
 }
