@@ -215,8 +215,8 @@ class ReminderCard extends StatelessWidget {
   }
 }
 
-/// Encapsulated, collapsible-ready meal details container (Requirement 4).
-class MealDetailsSection extends StatelessWidget {
+/// Encapsulated, collapsible-ready meal details container (Requirement 4 & Requirement 13).
+class MealDetailsSection extends StatefulWidget {
   const MealDetailsSection({
     super.key,
     this.linkedMedicineSummary,
@@ -231,16 +231,19 @@ class MealDetailsSection extends StatelessWidget {
       (preMealSummary != null && preMealSummary!.isNotEmpty);
 
   @override
+  State<MealDetailsSection> createState() => _MealDetailsSectionState();
+}
+
+class _MealDetailsSectionState extends State<MealDetailsSection> {
+  bool _isExpanded = false;
+
+  @override
   Widget build(BuildContext context) {
-    if (!hasContent) return const SizedBox.shrink();
+    if (!widget.hasContent) return const SizedBox.shrink();
     final colors = context.colors;
 
     return Container(
       margin: const EdgeInsets.only(top: AppSpacing.xs),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
-      ),
       decoration: BoxDecoration(
         color: colors.surfaceContainerHighest.withOpacity(0.4),
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -248,57 +251,114 @@ class MealDetailsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (linkedMedicineSummary != null &&
-              linkedMedicineSummary!.isNotEmpty) ...[
-            Row(
-              children: [
-                Icon(
-                  Icons.medication_outlined,
-                  size: 14,
-                  color: colors.primary,
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    linkedMedicineSummary!,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: colors.onSurface,
-                          fontWeight: FontWeight.w500,
-                        ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+          InkWell(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.xs,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: colors.primary,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      _isExpanded ? 'Hide Details' : 'Show Details',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: colors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 44,
+                    height: 36,
+                    child: Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_down
+                          : Icons.keyboard_arrow_right,
+                      size: 20,
+                      color: colors.primary,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
-          if (linkedMedicineSummary != null &&
-              linkedMedicineSummary!.isNotEmpty &&
-              preMealSummary != null &&
-              preMealSummary!.isNotEmpty)
-            const SizedBox(height: 2),
-          if (preMealSummary != null && preMealSummary!.isNotEmpty) ...[
-            Row(
-              children: [
-                Icon(
-                  Icons.alarm_outlined,
-                  size: 14,
-                  color: colors.onSurfaceMuted,
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    preMealSummary!,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          ),
+          if (_isExpanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.sm,
+                0,
+                AppSpacing.sm,
+                AppSpacing.xs,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(height: 1),
+                  const SizedBox(height: AppSpacing.xs),
+                  if (widget.linkedMedicineSummary != null &&
+                      widget.linkedMedicineSummary!.isNotEmpty) ...[
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.medication_outlined,
+                          size: 14,
+                          color: colors.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            widget.linkedMedicineSummary!,
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: colors.onSurface,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (widget.linkedMedicineSummary != null &&
+                      widget.linkedMedicineSummary!.isNotEmpty &&
+                      widget.preMealSummary != null &&
+                      widget.preMealSummary!.isNotEmpty)
+                    const SizedBox(height: 4),
+                  if (widget.preMealSummary != null &&
+                      widget.preMealSummary!.isNotEmpty) ...[
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.alarm_outlined,
+                          size: 14,
                           color: colors.onSurfaceMuted,
                         ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            widget.preMealSummary!,
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: colors.onSurfaceMuted,
+                                ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ],
         ],
       ),
     );

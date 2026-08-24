@@ -104,12 +104,21 @@ class BmiPlanPage extends GetView<BmiPlanController> {
       };
 }
 
-class _DietSection extends GetView<BmiPlanController> {
+class _DietSection extends StatefulWidget {
   const _DietSection({required this.l});
   final AppLocalizations l;
 
   @override
+  State<_DietSection> createState() => _DietSectionState();
+}
+
+class _DietSectionState extends State<_DietSection> {
+  final controller = Get.find<BmiPlanController>();
+  bool _isExpanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    final l = widget.l;
     return Obx(() {
       final diet = controller.diet.value;
       if (diet == null) return const SizedBox.shrink();
@@ -146,74 +155,113 @@ class _DietSection extends GetView<BmiPlanController> {
               ),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.only(left: AppSpacing.xxs, bottom: AppSpacing.xs),
-            child: Text(l.dailyCalories(diet.targetKcal),
-                style: Theme.of(context).textTheme.bodyMedium),
-          ),
-          if (hasDetails) ...[
-            AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          InkWell(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
                 children: [
-                  if (fileExists) ...[
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: Image.file(
-                        File(diet.imagePath!),
-                        height: 140,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
+                  Expanded(
+                    child: Text(
+                      l.dailyCalories(diet.targetKcal),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
-                    if (diet.description != null && diet.description!.isNotEmpty)
-                      const SizedBox(height: AppSpacing.xs),
-                  ],
-                  if (diet.description != null && diet.description!.isNotEmpty)
-                    Text(
-                      diet.description!,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
+                  ),
+                  Icon(
+                    _isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+                    size: 20,
+                    color: context.colors.primary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _isExpanded ? l.hideDetails : l.showDetails,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: context.colors.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
                 ],
               ),
             ),
+          ),
+          if (_isExpanded) ...[
             const SizedBox(height: AppSpacing.xs),
-          ],
-          ...diet.meals.map((m) => Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                child: AppCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(m.label,
-                          style: Theme.of(context).textTheme.titleMedium),
-                      const SizedBox(height: 4),
-                      ...m.items.map((i) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 2),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('• '),
-                                Expanded(child: Text(i)),
-                              ],
-                            ),
-                          )),
+            if (hasDetails) ...[
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (fileExists) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        child: Image.file(
+                          File(diet.imagePath!),
+                          height: 140,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      if (diet.description != null && diet.description!.isNotEmpty)
+                        const SizedBox(height: AppSpacing.xs),
                     ],
-                  ),
+                    if (diet.description != null && diet.description!.isNotEmpty)
+                      Text(
+                        diet.description!,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                  ],
                 ),
-              )),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+            ],
+            ...diet.meals.map((m) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                  child: AppCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(m.label,
+                            style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 4),
+                        ...m.items.map((i) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('• '),
+                                  Expanded(child: Text(i)),
+                                ],
+                              ),
+                            )),
+                      ],
+                    ),
+                  ),
+                )),
+          ],
         ],
       );
     });
   }
 }
 
-class _ExerciseSection extends GetView<BmiPlanController> {
+class _ExerciseSection extends StatefulWidget {
   const _ExerciseSection({required this.l});
   final AppLocalizations l;
 
   @override
+  State<_ExerciseSection> createState() => _ExerciseSectionState();
+}
+
+class _ExerciseSectionState extends State<_ExerciseSection> {
+  final controller = Get.find<BmiPlanController>();
+  bool _isExpanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    final l = widget.l;
     return Obx(() {
       final plan = controller.exercise.value;
       if (plan == null) return const SizedBox.shrink();
@@ -251,102 +299,133 @@ class _ExerciseSection extends GetView<BmiPlanController> {
               ),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.only(left: AppSpacing.xxs, bottom: AppSpacing.xs),
-            child: Text('${l.exerciseDuration}: $totalMins min',
-                style: Theme.of(context).textTheme.bodyMedium),
-          ),
-          if (hasDetails) ...[
-            AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          InkWell(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
                 children: [
-                  if (fileExists) ...[
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: Image.file(
-                        File(plan.imagePath!),
-                        height: 140,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
+                  Expanded(
+                    child: Text(
+                      '${l.exerciseDuration}: $totalMins min',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
-                    if (plan.description != null && plan.description!.isNotEmpty)
-                      const SizedBox(height: AppSpacing.xs),
-                  ],
-                  if (plan.description != null && plan.description!.isNotEmpty)
-                    Text(
-                      plan.description!,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
+                  ),
+                  Icon(
+                    _isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+                    size: 20,
+                    color: context.colors.primary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _isExpanded ? l.hideDetails : l.showDetails,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: context.colors.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.xs),
-          ],
-          AppCard(
-            child: Column(
-              children: [
-                ...plan.items.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final e = entry.value;
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(_iconFor(e.iconKey),
-                        color: context.colors.secondary),
-                    title: Text(e.name),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('${e.durationMins} min',
-                            style: Theme.of(context).textTheme.labelSmall),
-                        IconButton(
-                          icon: const Icon(Icons.edit_outlined, size: 18),
-                          tooltip: l.editExerciseTime,
-                          onPressed: () => _openEditDurationDialog(
-                            context: context,
-                            l: l,
-                            exercise: e,
-                            onSave: (newMins) =>
-                                controller.updateExerciseDuration(index, newMins),
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.delete_outline,
-                            size: 18,
-                            color: plan.items.length > 1 ? Colors.red : Colors.grey,
-                          ),
-                          tooltip: l.removeExercise,
-                          onPressed: plan.items.length > 1
-                              ? () => controller.removeExercise(index)
-                              : null,
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-                const Divider(height: 16),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed: () => _openAddExerciseDialog(
-                      context: context,
-                      l: l,
-                      onAdd: (name, iconKey) =>
-                          controller.addExercise(name: name, iconKey: iconKey),
-                    ),
-                    icon: const Icon(Icons.add, size: 18),
-                    label: Text(l.addExercise),
-                  ),
-                ),
-              ],
-            ),
           ),
+          if (_isExpanded) ...[
+            const SizedBox(height: AppSpacing.xs),
+            if (hasDetails) ...[
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (fileExists) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        child: Image.file(
+                          File(plan.imagePath!),
+                          height: 140,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      if (plan.description != null && plan.description!.isNotEmpty)
+                        const SizedBox(height: AppSpacing.xs),
+                    ],
+                    if (plan.description != null && plan.description!.isNotEmpty)
+                      Text(
+                        plan.description!,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+            ],
+            AppCard(
+              child: Column(
+                children: [
+                  ...plan.items.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final e = entry.value;
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(_iconFor(e.iconKey),
+                          color: context.colors.secondary),
+                      title: Text(e.name),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('${e.durationMins} min',
+                              style: Theme.of(context).textTheme.labelSmall),
+                          IconButton(
+                            icon: const Icon(Icons.edit_outlined, size: 18),
+                            tooltip: l.editExerciseTime,
+                            onPressed: () => _openEditDurationDialog(
+                              context: context,
+                              l: l,
+                              exercise: e,
+                              onSave: (newMins) =>
+                                  controller.updateExerciseDuration(index, newMins),
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              Icons.delete_outline,
+                              size: 18,
+                              color: plan.items.length > 1 ? Colors.red : Colors.grey,
+                            ),
+                            tooltip: l.removeExercise,
+                            onPressed: plan.items.length > 1
+                                ? () => controller.removeExercise(index)
+                                : null,
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                  const Divider(height: 16),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () => _openAddExerciseDialog(
+                        context: context,
+                        l: l,
+                        onAdd: (name, iconKey) =>
+                            controller.addExercise(name: name, iconKey: iconKey),
+                      ),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: Text(l.addExercise),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       );
     });
   }
+}
 
   IconData _iconFor(String key) => switch (key) {
         'walk' => Icons.directions_walk,

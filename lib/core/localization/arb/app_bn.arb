@@ -59,7 +59,7 @@
   "pleaseVerify": "যাচাই করুন",
   "sectionMedicines": "ওষুধ",
   "sectionTests": "পরীক্ষা",
-  "sectionInstructions": "প্রেসক্রিপশনের বিবরণ",
+  "sectionInstructions": "ডাক্তারের পরামর্শ",
   "fieldName": "নাম",
   "fieldDose": "ডোজ",
   "fieldFrequency": "দৈনিক কতবার",
@@ -190,5 +190,7 @@
   "guestAccount": "অতিথি অ্যাকাউন্ট (শুধু লোকাল)",
   "authOfflineNote": "সাইন ইন করতে ইন্টারনেট ও Firebase সেটআপ প্রয়োজন। অ্যাকাউন্ট ছাড়াই অ্যাপটি সম্পূর্ণ অফলাইনে কাজ করে।",
 
-  "medicalDisclaimer": "শুধুমাত্র তথ্যের জন্য; এটি পেশাদার চিকিৎসা পরামর্শের বিকল্প নয়।"
+  "medicalDisclaimer": "শুধুমাত্র তথ্যের জন্য; এটি পেশাদার চিকিৎসা পরামর্শের বিকল্প নয়।",
+  "showDetails": "বিবরণ দেখুন",
+  "hideDetails": "বিবরণ লুকান"
 }

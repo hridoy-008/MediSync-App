@@ -59,7 +59,7 @@
   "pleaseVerify": "Please verify",
   "sectionMedicines": "Medicines",
   "sectionTests": "Tests",
-  "sectionInstructions": "Prescription Details",
+  "sectionInstructions": "Doctor's Advice",
   "fieldName": "Name",
   "fieldDose": "Dose",
   "fieldFrequency": "Times per day",
@@ -190,5 +190,7 @@
   "guestAccount": "Guest account (local only)",
   "authOfflineNote": "Sign-in needs internet and Firebase setup. The app works fully offline without an account.",
 
-  "medicalDisclaimer": "For informational purposes only; not a substitute for professional medical advice."
+  "medicalDisclaimer": "For informational purposes only; not a substitute for professional medical advice.",
+  "showDetails": "Show details",
+  "hideDetails": "Hide details"
 }

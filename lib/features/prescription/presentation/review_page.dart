@@ -174,6 +174,8 @@ class _MedicineEditorState extends State<_MedicineEditor> {
       TextEditingController(text: widget.medicine.lowStockThreshold?.toString() ?? '5');
   late Medicine _m = widget.medicine;
 
+  late bool _showStockOptions = widget.medicine.stockAlertEnabled;
+
   @override
   void dispose() {
     _name.dispose();
@@ -254,59 +256,89 @@ class _MedicineEditorState extends State<_MedicineEditor> {
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
-          SwitchListTile.adaptive(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              Get.find<LocaleController>().isBangla
-                  ? 'স্টক ট্র্যাকিং চালু করুন'
-                  : 'Enable Stock Tracking',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            value: _m.stockAlertEnabled,
-            onChanged: (val) {
+          InkWell(
+            onTap: () {
               setState(() {
-                _m = _m.copyWith(stockAlertEnabled: val);
+                _showStockOptions = !_showStockOptions;
               });
-              _emit();
             },
-          ),
-          if (_m.stockAlertEnabled) ...[
-            const SizedBox(height: AppSpacing.xs),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _stockCount,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: Get.find<LocaleController>().isBangla ? 'বর্তমান স্টক' : 'Current Stock',
-                      hintText: 'e.g. 30',
-                    ),
-                    onChanged: (val) {
-                      final count = int.tryParse(val);
-                      _m = _m.copyWith(stockCount: count);
-                      _emit();
-                    },
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  Icon(
+                    _showStockOptions ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+                    size: 20,
+                    color: context.colors.primary,
                   ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: TextFormField(
-                    controller: _lowStockThreshold,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: Get.find<LocaleController>().isBangla ? 'কম স্টকের মাত্রা' : 'Low Threshold',
-                      hintText: 'e.g. 5',
-                    ),
-                    onChanged: (val) {
-                      final threshold = int.tryParse(val);
-                      _m = _m.copyWith(lowStockThreshold: threshold);
-                      _emit();
-                    },
+                  const SizedBox(width: 4),
+                  Text(
+                    Get.find<LocaleController>().isBangla ? 'স্টক ট্র্যাকিং অপশন' : 'Stock Tracking Options',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: context.colors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+          ),
+          if (_showStockOptions) ...[
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                Get.find<LocaleController>().isBangla
+                    ? 'স্টক ট্র্যাকিং চালু করুন'
+                    : 'Enable Stock Tracking',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              value: _m.stockAlertEnabled,
+              onChanged: (val) {
+                setState(() {
+                  _m = _m.copyWith(stockAlertEnabled: val);
+                });
+                _emit();
+              },
+            ),
+            if (_m.stockAlertEnabled) ...[
+              const SizedBox(height: AppSpacing.xs),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _stockCount,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: Get.find<LocaleController>().isBangla ? 'বর্তমান স্টক' : 'Current Stock',
+                        hintText: 'e.g. 30',
+                      ),
+                      onChanged: (val) {
+                        final count = int.tryParse(val);
+                        _m = _m.copyWith(stockCount: count);
+                        _emit();
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _lowStockThreshold,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: Get.find<LocaleController>().isBangla ? 'কম স্টকের মাত্রা' : 'Low Threshold',
+                        hintText: 'e.g. 5',
+                      ),
+                      onChanged: (val) {
+                        final threshold = int.tryParse(val);
+                        _m = _m.copyWith(lowStockThreshold: threshold);
+                        _emit();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ],
       ),
