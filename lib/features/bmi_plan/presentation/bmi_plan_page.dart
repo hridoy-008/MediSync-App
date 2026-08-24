@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/design_system/design_system.dart';
 import '../../../core/localization/l10n.dart';
+import '../../../domain/entities/plan.dart';
 import '../../../domain/enums.dart';
 import 'bmi_plan_controller.dart';
 
@@ -425,7 +426,6 @@ class _ExerciseSectionState extends State<_ExerciseSection> {
       );
     });
   }
-}
 
   IconData _iconFor(String key) => switch (key) {
         'walk' => Icons.directions_walk,

@@ -54,10 +54,20 @@ class BmiPlanController extends GetxController {
       if (p.sex != null) sex.value = p.sex!;
       if (p.activityLevel != null) activity.value = p.activityLevel!;
       if (p.bmi != null && p.bmiCategory != null) {
+        final bmr = (p.heightCm != null && p.weightKg != null && p.age != null && p.sex != null && p.activityLevel != null)
+            ? _calc.compute(
+                heightCm: p.heightCm!,
+                weightKg: p.weightKg!,
+                age: p.age!,
+                sex: p.sex!,
+                activity: p.activityLevel!,
+              )
+            : null;
         result.value = BmiResult(
           bmi: p.bmi!,
           category: p.bmiCategory!,
-          maintenanceKcal: 2000,
+          bmrKcal: bmr?.bmrKcal ?? 1600.0,
+          maintenanceKcal: bmr?.maintenanceKcal ?? 2000.0,
         );
       }
     }

@@ -90,8 +90,15 @@ class DashboardController extends GetxController {
 
     if (LocalStore.instance.isReady) {
       final rawConsumed = LocalStore.instance.singletons.get(_todayWaterKey());
-      if (rawConsumed != null && rawConsumed is num) {
-        waterConsumedGlasses.value = rawConsumed.toInt();
+      if (rawConsumed is Map) {
+        final val = rawConsumed['glasses'] ?? rawConsumed['count'] ?? rawConsumed['consumed'];
+        if (val is num) {
+          waterConsumedGlasses.value = val.toInt();
+        } else {
+          waterConsumedGlasses.value = 0;
+        }
+      } else if (rawConsumed is num) {
+        waterConsumedGlasses.value = (rawConsumed as num).toInt();
       } else {
         waterConsumedGlasses.value = 0;
       }
@@ -102,7 +109,7 @@ class DashboardController extends GetxController {
     waterConsumedGlasses.value++;
     if (LocalStore.instance.isReady) {
       await LocalStore.instance.singletons
-          .put(_todayWaterKey(), waterConsumedGlasses.value);
+          .put(_todayWaterKey(), {'glasses': waterConsumedGlasses.value});
     }
   }
 
@@ -111,7 +118,7 @@ class DashboardController extends GetxController {
     waterConsumedGlasses.value--;
     if (LocalStore.instance.isReady) {
       await LocalStore.instance.singletons
-          .put(_todayWaterKey(), waterConsumedGlasses.value);
+          .put(_todayWaterKey(), {'glasses': waterConsumedGlasses.value});
     }
   }
 

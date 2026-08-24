@@ -18,6 +18,27 @@ class TimeFormat {
   static String fromMinutes(int minutesFromMidnight, {required bool bangla}) =>
       hm(minutesFromMidnight ~/ 60, minutesFromMidnight % 60, bangla: bangla);
 
+  static String formatDate(DateTime dt, {required bool isBangla}) {
+    final year = dt.year;
+    final month = dt.month;
+    final day = dt.day;
+    final monthsEn = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    final monthsBn = [
+      'জানু', 'ফেব্রু', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
+      'জুলাই', 'আগস্ট', 'সেপ্টে', 'অক্টো', 'নভে', 'ডিসে'
+    ];
+    final mStr = isBangla ? monthsBn[month - 1] : monthsEn[month - 1];
+    if (isBangla) {
+      final dayBn = BanglaNumerals.toBangla(day);
+      final yearBn = BanglaNumerals.toBangla(year);
+      return '$dayBn $mStr $yearBn';
+    }
+    return '$day $mStr $year';
+  }
+
   static String _bnPad(int minute) {
     final mm = minute.toString().padLeft(2, '0');
     return BanglaNumerals.toBangla(int.parse(mm)).padLeft(2, '০');

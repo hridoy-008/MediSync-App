@@ -245,7 +245,7 @@ class _MealDetailsSectionState extends State<MealDetailsSection> {
     return Container(
       margin: const EdgeInsets.only(top: AppSpacing.xs),
       decoration: BoxDecoration(
-        color: colors.surfaceContainerHighest.withOpacity(0.4),
+        color: colors.surfaceVariant.withOpacity(0.4),
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
