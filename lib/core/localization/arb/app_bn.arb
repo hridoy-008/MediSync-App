@@ -193,6 +193,7 @@
   "medicalDisclaimer": "শুধুমাত্র তথ্যের জন্য; এটি পেশাদার চিকিৎসা পরামর্শের বিকল্প নয়।",
   "showDetails": "বিবরণ দেখুন",
   "hideDetails": "বিবরণ লুকান",
+  "stockTrackingOptions": "স্টক ট্র্যাকিং অপশন",
 
   "lowStockTitle": "কম স্টকের ওষুধ",
   "noLowStockTitle": "কোনো ওষুধের স্টক কম নেই",

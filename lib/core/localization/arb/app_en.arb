@@ -193,6 +193,7 @@
   "medicalDisclaimer": "For informational purposes only; not a substitute for professional medical advice.",
   "showDetails": "Show details",
   "hideDetails": "Hide details",
+  "stockTrackingOptions": "Stock Tracking Options",
 
   "lowStockTitle": "Low Stock Inventory",
   "noLowStockTitle": "No medicines low in stock",

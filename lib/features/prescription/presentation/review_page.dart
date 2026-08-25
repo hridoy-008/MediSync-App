@@ -256,31 +256,41 @@ class _MedicineEditorState extends State<_MedicineEditor> {
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
-          InkWell(
-            onTap: () {
-              setState(() {
-                _showStockOptions = !_showStockOptions;
-              });
-            },
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(
-                children: [
-                  Icon(
-                    _showStockOptions ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
-                    size: 20,
-                    color: context.colors.primary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    Get.find<LocaleController>().isBangla ? 'স্টক ট্র্যাকিং অপশন' : 'Stock Tracking Options',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: context.colors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                ],
+          Semantics(
+            button: true,
+            expanded: _showStockOptions,
+            label: l.stockTrackingOptions,
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  _showStockOptions = !_showStockOptions;
+                });
+              },
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: Container(
+                constraints: const BoxConstraints(minHeight: AppSizing.minTapTarget),
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 32,
+                      height: 32,
+                      child: Icon(
+                        _showStockOptions ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+                        size: 20,
+                        color: context.colors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      l.stockTrackingOptions,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: context.colors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

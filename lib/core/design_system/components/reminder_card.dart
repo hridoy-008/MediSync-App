@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/enums.dart';
+import '../../localization/l10n.dart';
 import '../app_theme.dart';
 import '../reminder_visuals.dart';
 import '../tokens.dart';
@@ -241,6 +242,7 @@ class _MealDetailsSectionState extends State<MealDetailsSection> {
   Widget build(BuildContext context) {
     if (!widget.hasContent) return const SizedBox.shrink();
     final colors = context.colors;
+    final l = context.l10n;
 
     return Container(
       margin: const EdgeInsets.only(top: AppSpacing.xs),
@@ -251,43 +253,49 @@ class _MealDetailsSectionState extends State<MealDetailsSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          InkWell(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            onTap: () => setState(() => _isExpanded = !_isExpanded),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm,
-                vertical: AppSpacing.xs,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    size: 16,
-                    color: colors.primary,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      _isExpanded ? 'Hide Details' : 'Show Details',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: colors.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 44,
-                    height: 36,
-                    child: Icon(
-                      _isExpanded
-                          ? Icons.keyboard_arrow_down
-                          : Icons.keyboard_arrow_right,
-                      size: 20,
+          Semantics(
+            button: true,
+            expanded: _isExpanded,
+            label: _isExpanded ? l.hideDetails : l.showDetails,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              onTap: () => setState(() => _isExpanded = !_isExpanded),
+              child: Container(
+                constraints: const BoxConstraints(minHeight: AppSizing.minTapTarget),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.xs,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 16,
                       color: colors.primary,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        _isExpanded ? l.hideDetails : l.showDetails,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: colors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: Icon(
+                        _isExpanded
+                            ? Icons.keyboard_arrow_down
+                            : Icons.keyboard_arrow_right,
+                        size: 20,
+                        color: colors.primary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
