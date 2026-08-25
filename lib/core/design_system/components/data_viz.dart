@@ -159,10 +159,14 @@ class AdherenceHeatmap extends StatelessWidget {
     super.key,
     required this.logs,
     required this.isBangla,
+    this.selectedDate,
+    this.onDateSelected,
   });
 
   final List<ReminderLog> logs;
   final bool isBangla;
+  final DateTime? selectedDate;
+  final ValueChanged<DateTime>? onDateSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -198,6 +202,11 @@ class AdherenceHeatmap extends StatelessWidget {
               return d.year == day.year && d.month == day.month && d.day == day.day;
             }).toList();
 
+            final isSelected = selectedDate != null &&
+                selectedDate!.year == day.year &&
+                selectedDate!.month == day.month &&
+                selectedDate!.day == day.day;
+
             final total = dayLogs.length;
             final taken = dayLogs.where((l) => l.action == ReminderAction.taken).length;
             final compliance = total == 0 ? null : (taken / total);
@@ -219,24 +228,35 @@ class AdherenceHeatmap extends StatelessWidget {
               message: total == 0
                   ? (isBangla ? 'কোনো ওষুধ ছিল না' : 'No medicines')
                   : '${day.day}/${day.month}: ${(compliance! * 100).round()}% ${isBangla ? 'মেনে চলা হয়েছে' : 'adhered'} ($taken/$total)',
-              child: Container(
-                decoration: BoxDecoration(
-                  color: color,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => onDateSelected?.call(day),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: colors.outline.withOpacity(0.2),
-                    width: 1,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  '${day.day}',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: compliance != null
-                            ? Colors.white
-                            : colors.onSurfaceMuted,
-                        fontWeight: compliance != null ? FontWeight.bold : null,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: isSelected
+                            ? colors.primary
+                            : colors.outline.withOpacity(0.2),
+                        width: isSelected ? 2.5 : 1,
                       ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '${day.day}',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: compliance != null
+                                ? Colors.white
+                                : colors.onSurfaceMuted,
+                            fontWeight: compliance != null || isSelected
+                                ? FontWeight.bold
+                                : null,
+                          ),
+                    ),
+                  ),
                 ),
               ),
             );

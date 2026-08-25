@@ -194,6 +194,9 @@
   "showDetails": "বিবরণ দেখুন",
   "hideDetails": "বিবরণ লুকান",
   "stockTrackingOptions": "স্টক ট্র্যাকিং অপশন",
+  "backToToday": "আজকের দিনে ফিরুন",
+  "selectedDateTitle": "{date}-এর বিবরণ",
+  "@selectedDateTitle": { "placeholders": { "date": {} } },
 
   "lowStockTitle": "কম স্টকের ওষুধ",
   "noLowStockTitle": "কোনো ওষুধের স্টক কম নেই",

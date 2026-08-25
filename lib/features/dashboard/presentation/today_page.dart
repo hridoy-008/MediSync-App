@@ -135,6 +135,8 @@ class TodayPage extends GetView<DashboardController> {
                         AdherenceHeatmap(
                           logs: controller.logs,
                           isBangla: bangla,
+                          selectedDate: controller.selectedDate.value,
+                          onDateSelected: controller.selectDate,
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         Align(
@@ -171,25 +173,48 @@ class _Header extends GetView<DashboardController> {
           AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.xs),
       child: Obx(() {
         final name = controller.profile.value.name;
-        return Row(
+        final isToday = controller.isTodaySelected;
+        final selDate = controller.selectedDate.value;
+        final dateStr = TimeFormat.formatDate(selDate, isBangla: bangla);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name.isEmpty ? l.todayGreeting : '${l.todayGreeting}, $name',
-                    style: Theme.of(context).textTheme.bodyMedium,
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name.isEmpty ? l.todayGreeting : '${l.todayGreeting}, $name',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      Text(
+                        isToday ? l.todayTitle : dateStr,
+                        style: Theme.of(context).textTheme.displayLarge,
+                      ),
+                    ],
                   ),
-                  Text(l.todayTitle,
-                      style: Theme.of(context).textTheme.displayLarge),
+                ),
+                AdherenceRing(
+                  done: controller.doneCount.value,
+                  total: controller.totalCount.value,
+                ),
+              ],
+            ),
+            if (!isToday) ...[
+              const SizedBox(height: AppSpacing.xs),
+              Row(
+                children: [
+                  ActionChip(
+                    avatar: const Icon(Icons.today, size: 16),
+                    label: Text(l.backToToday),
+                    onPressed: controller.resetToToday,
+                  ),
                 ],
               ),
-            ),
-            AdherenceRing(
-              done: controller.doneCount.value,
-              total: controller.totalCount.value,
-            ),
+            ],
           ],
         );
       }),

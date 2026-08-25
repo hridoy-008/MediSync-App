@@ -194,6 +194,9 @@
   "showDetails": "Show details",
   "hideDetails": "Hide details",
   "stockTrackingOptions": "Stock Tracking Options",
+  "backToToday": "Back to Today",
+  "selectedDateTitle": "Details for {date}",
+  "@selectedDateTitle": { "placeholders": { "date": {} } },
 
   "lowStockTitle": "Low Stock Inventory",
   "noLowStockTitle": "No medicines low in stock",

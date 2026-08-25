@@ -40,15 +40,23 @@ class DashboardController extends GetxController {
   final Rxn<TimelineItem> nextUp = Rxn<TimelineItem>();
   final logs = <ReminderLog>[].obs;
 
-  // Requirement 8: Water Tracker
+  // Requirement 17: Selected Date State
+  final selectedDate = DateTime.now().obs;
+
+  bool get isTodaySelected {
+    final now = DateTime.now();
+    final sel = selectedDate.value;
+    return sel.year == now.year && sel.month == now.month && sel.day == now.day;
+  }
+
+  // Requirement 8 & 17: Water Tracker
   final waterConsumedGlasses = 0.obs;
   final waterTargetGlasses = 10.obs;
 
-  String _todayWaterKey() {
-    final now = DateTime.now();
-    final monthStr = now.month.toString().padLeft(2, '0');
-    final dayStr = now.day.toString().padLeft(2, '0');
-    return 'water_log_${now.year}-$monthStr-$dayStr';
+  String _waterKeyForDate(DateTime d) {
+    final monthStr = d.month.toString().padLeft(2, '0');
+    final dayStr = d.day.toString().padLeft(2, '0');
+    return 'water_log_${d.year}-$monthStr-$dayStr';
   }
 
   @override
@@ -56,14 +64,24 @@ class DashboardController extends GetxController {
     super.onInit();
     _profiles.watch().listen(profile.call);
     // Rebuild whenever reminders or logs change.
-    _reminders.watchAll().listen((_) => loadToday());
-    _reminders.watchLogs().listen((_) => loadToday());
-    loadToday();
+    _reminders.watchAll().listen((_) => loadDate());
+    _reminders.watchLogs().listen((_) => loadDate());
+    loadDate();
   }
 
   void setTab(int i) => navIndex.value = i;
 
-  Future<void> loadToday() async {
+  Future<void> loadToday() => loadDate(DateTime.now());
+
+  Future<void> selectDate(DateTime date) => loadDate(date);
+
+  Future<void> resetToToday() => loadDate(DateTime.now());
+
+  Future<void> loadDate([DateTime? date]) async {
+    if (date != null) {
+      selectedDate.value = DateTime(date.year, date.month, date.day);
+    }
+    final targetDay = selectedDate.value;
     final reminders = (await _reminders.getAll()).valueOrNull ?? const [];
     final allLogs = (await _reminders.getLogs()).valueOrNull ?? const [];
     final meals = (await _config.getMeals()).valueOrNull ?? const [];
@@ -71,7 +89,7 @@ class DashboardController extends GetxController {
     final items = _builder.buildForDay(
       reminders: reminders,
       logs: allLogs,
-      day: DateTime.now(),
+      day: targetDay,
       meals: meals,
     );
     timeline.assignAll(items);
@@ -79,17 +97,17 @@ class DashboardController extends GetxController {
     doneCount.value = a.done;
     totalCount.value = a.total;
     nextUp.value = _builder.nextUp(items, DateTime.now());
-    await _loadWaterTracker();
+    await _loadWaterTracker(targetDay);
     loading.value = false;
   }
 
-  Future<void> _loadWaterTracker() async {
+  Future<void> _loadWaterTracker(DateTime targetDay) async {
     final hydration = (await _config.getHydration()).valueOrNull ?? const HydrationConfig();
     final targetMl = hydration.dailyTargetMl;
     waterTargetGlasses.value = (targetMl / 250).round().clamp(1, 99);
 
     if (LocalStore.instance.isReady) {
-      final rawConsumed = LocalStore.instance.singletons.get(_todayWaterKey());
+      final rawConsumed = LocalStore.instance.singletons.get(_waterKeyForDate(targetDay));
       if (rawConsumed is Map) {
         final val = rawConsumed['glasses'] ?? rawConsumed['count'] ?? rawConsumed['consumed'];
         if (val is num) {
@@ -109,7 +127,7 @@ class DashboardController extends GetxController {
     waterConsumedGlasses.value++;
     if (LocalStore.instance.isReady) {
       await LocalStore.instance.singletons
-          .put(_todayWaterKey(), {'glasses': waterConsumedGlasses.value});
+          .put(_waterKeyForDate(selectedDate.value), {'glasses': waterConsumedGlasses.value});
     }
   }
 
@@ -118,7 +136,7 @@ class DashboardController extends GetxController {
     waterConsumedGlasses.value--;
     if (LocalStore.instance.isReady) {
       await LocalStore.instance.singletons
-          .put(_todayWaterKey(), {'glasses': waterConsumedGlasses.value});
+          .put(_waterKeyForDate(selectedDate.value), {'glasses': waterConsumedGlasses.value});
     }
   }
 
