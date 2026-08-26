@@ -42,18 +42,33 @@ class TodayPage extends GetView<DashboardController> {
                     ),
                   ),
                 )
-              else
-                SliverList.separated(
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) =>
-                      const SizedBox(height: AppSpacing.sm),
-                  itemBuilder: (context, i) {
+              else () {
+                final now = DateTime.now();
+                final showIndicator = controller.isTodaySelected;
+
+                int indicatorPos = -1;
+                if (showIndicator && items.isNotEmpty) {
+                  indicatorPos = items.indexWhere((item) => item.scheduledTime.isAfter(now));
+                  if (indicatorPos == -1) indicatorPos = items.length;
+                }
+
+                final timelineWidgets = <Widget>[];
+                for (int i = 0; i <= items.length; i++) {
+                  if (showIndicator && items.isNotEmpty && i == indicatorPos) {
+                    timelineWidgets.add(_CurrentTimeIndicator(bangla: bangla));
+                  }
+                  if (i < items.length) {
                     final item = items[i];
+                    final graceEnd = item.scheduledTime.add(Duration(minutes: item.reminder.graceWindowMins));
+                    final isWindowPassed = now.isAfter(graceEnd);
+                    final isConfirmed = controller.logs.any((l) =>
+                        l.reminderId == item.reminder.id &&
+                        l.scheduledTime.millisecondsSinceEpoch == item.scheduledTime.millisecondsSinceEpoch);
+                    final canAct = !isConfirmed;
+
                     final emphasized =
-                        controller.nextUp.value?.scheduledTime ==
-                            item.scheduledTime &&
-                        controller.nextUp.value?.reminder.id ==
-                            item.reminder.id;
+                        controller.nextUp.value?.scheduledTime == item.scheduledTime &&
+                        controller.nextUp.value?.reminder.id == item.reminder.id;
                     final isMedicine = item.type == ReminderType.medicine;
                     final targetCount = isMedicine
                         ? controller.getMedicineTargetCount(item.reminder.id)
@@ -62,53 +77,58 @@ class TodayPage extends GetView<DashboardController> {
                         ? controller.getMedicineCompletedCount(item.reminder.id)
                         : null;
 
-                    return Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        AppSpacing.md,
-                        i == 0 ? AppSpacing.xs : 0,
-                        AppSpacing.md,
-                        i == items.length - 1 ? AppSpacing.xs : 0,
-                      ),
-                      child: ReminderCard(
-                        type: item.type,
-                        title: item.reminder.title,
-                        subtitle: item.reminder.subtitle,
-                        timeLabel: TimeFormat.fromDateTime(item.scheduledTime,
-                            bangla: bangla),
-                        status: item.status,
-                        emphasized: emphasized,
-                        takenLabel: l.taken,
-                        snoozeLabel: l.snooze,
-                        skipLabel: l.skip,
-                        onTaken: item.isPending
-                            ? () => controller.act(item, ReminderAction.taken)
-                            : null,
-                        onSnooze: item.isPending
-                            ? () => controller.act(item, ReminderAction.snoozed)
-                            : null,
-                        onSkip: item.isPending
-                            ? () => controller.act(item, ReminderAction.skipped)
-                            : null,
-                        stockCount: item.reminder.stockCount,
-                        isLowStock: item.reminder.isLowStock,
-                        completedCount: completedCount,
-                        targetCount: targetCount,
-                        onIncrement: isMedicine
-                            ? () => controller
-                                .incrementMedicineDose(item.reminder.id)
-                            : null,
-                        onDecrement: isMedicine
-                            ? () => controller
-                                .decrementMedicineDose(item.reminder.id)
-                            : null,
-                        mealDetails: MealDetailsSection(
-                          linkedMedicineSummary: item.linkedMedicineSummary,
-                          preMealSummary: item.preMealSummary,
+                    timelineWidgets.add(
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                        child: ReminderCard(
+                          type: item.type,
+                          title: item.reminder.title,
+                          subtitle: item.reminder.subtitle,
+                          timeLabel: TimeFormat.fromDateTime(item.scheduledTime, bangla: bangla),
+                          status: item.status,
+                          emphasized: emphasized,
+                          takenLabel: l.taken,
+                          snoozeLabel: l.snooze,
+                          skipLabel: l.skip,
+                          missedLabel: l.missed,
+                          onTaken: canAct
+                              ? () => controller.act(item, ReminderAction.taken)
+                              : null,
+                          onSnooze: (canAct && !isWindowPassed)
+                              ? () => controller.act(item, ReminderAction.snoozed)
+                              : null,
+                          onSkip: (canAct && !isWindowPassed)
+                              ? () => controller.act(item, ReminderAction.skipped)
+                              : null,
+                          onMissed: (canAct && isWindowPassed)
+                              ? () => controller.act(item, ReminderAction.missed)
+                              : null,
+                          stockCount: item.reminder.stockCount,
+                          isLowStock: item.reminder.isLowStock,
+                          completedCount: completedCount,
+                          targetCount: targetCount,
+                          onIncrement: isMedicine
+                              ? () => controller.incrementMedicineDose(item.reminder.id)
+                              : null,
+                          onDecrement: isMedicine
+                              ? () => controller.decrementMedicineDose(item.reminder.id)
+                              : null,
+                          mealDetails: MealDetailsSection(
+                            linkedMedicineSummary: item.linkedMedicineSummary,
+                            preMealSummary: item.preMealSummary,
+                          ),
                         ),
                       ),
                     );
-                  },
-                ),
+                  }
+                }
+
+                return SliverList.separated(
+                  itemCount: timelineWidgets.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+                  itemBuilder: (context, i) => timelineWidgets[i],
+                );
+              }(),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(
@@ -320,3 +340,65 @@ class _WaterTrackerCard extends GetView<DashboardController> {
     });
   }
 }
+
+class _CurrentTimeIndicator extends StatelessWidget {
+  const _CurrentTimeIndicator({required this.bangla});
+  final bool bangla;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final now = DateTime.now();
+    final timeStr = TimeFormat.fromDateTime(now, bangla: bangla);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: colors.primary,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  timeStr,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Container(
+              height: 2,
+              decoration: BoxDecoration(
+                color: colors.primary,
+                borderRadius: BorderRadius.circular(1),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

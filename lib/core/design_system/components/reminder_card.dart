@@ -20,9 +20,11 @@ class ReminderCard extends StatelessWidget {
     this.takenLabel,
     this.snoozeLabel,
     this.skipLabel,
+    this.missedLabel,
     this.onTaken,
     this.onSnooze,
     this.onSkip,
+    this.onMissed,
     this.stockCount,
     this.isLowStock = false,
     this.mealDetails,
@@ -41,9 +43,11 @@ class ReminderCard extends StatelessWidget {
   final String? takenLabel;
   final String? snoozeLabel;
   final String? skipLabel;
+  final String? missedLabel;
   final VoidCallback? onTaken;
   final VoidCallback? onSnooze;
   final VoidCallback? onSkip;
+  final VoidCallback? onMissed;
   final int? stockCount;
   final bool isLowStock;
   final Widget? mealDetails;
@@ -172,7 +176,7 @@ class ReminderCard extends StatelessWidget {
             ),
           ],
           if (mealDetails != null) mealDetails!,
-          if (pending && (onTaken != null || onSnooze != null || onSkip != null)) ...[
+          if (onTaken != null || onSnooze != null || onSkip != null || onMissed != null) ...[
             const SizedBox(height: AppSpacing.sm),
             Row(
               children: [
@@ -186,7 +190,7 @@ class ReminderCard extends StatelessWidget {
                     ),
                   ),
                 if (onSnooze != null) ...[
-                  const SizedBox(width: AppSpacing.xs),
+                  if (onTaken != null) const SizedBox(width: AppSpacing.xs),
                   Expanded(
                     child: _QuickAction(
                       label: snoozeLabel ?? 'Snooze',
@@ -197,13 +201,26 @@ class ReminderCard extends StatelessWidget {
                   ),
                 ],
                 if (onSkip != null) ...[
-                  const SizedBox(width: AppSpacing.xs),
+                  if (onTaken != null || onSnooze != null)
+                    const SizedBox(width: AppSpacing.xs),
                   Expanded(
                     child: _QuickAction(
                       label: skipLabel ?? 'Skip',
                       icon: Icons.close,
                       color: colors.onSurfaceMuted,
                       onTap: onSkip!,
+                    ),
+                  ),
+                ],
+                if (onMissed != null) ...[
+                  if (onTaken != null || onSnooze != null || onSkip != null)
+                    const SizedBox(width: AppSpacing.xs),
+                  Expanded(
+                    child: _QuickAction(
+                      label: missedLabel ?? 'Missed',
+                      icon: Icons.error_outline,
+                      color: colors.danger,
+                      onTap: onMissed!,
                     ),
                   ),
                 ],
