@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../../domain/enums.dart';
@@ -15,6 +17,8 @@ class ReminderCard extends StatelessWidget {
     required this.title,
     required this.timeLabel,
     required this.status,
+    this.statusLabel,
+    this.statusColor,
     this.subtitle,
     this.emphasized = false,
     this.takenLabel,
@@ -25,6 +29,8 @@ class ReminderCard extends StatelessWidget {
     this.onSnooze,
     this.onSkip,
     this.onMissed,
+    this.isActionable = true,
+    this.isConfirmed = false,
     this.stockCount,
     this.isLowStock = false,
     this.mealDetails,
@@ -32,12 +38,19 @@ class ReminderCard extends StatelessWidget {
     this.targetCount,
     this.onIncrement,
     this.onDecrement,
+    this.imagePath,
+    this.recommendedFood,
+    this.description,
+    this.onEdit,
+    this.isBangla = false,
   });
 
   final ReminderType type;
   final String title;
   final String timeLabel;
   final ReminderStatus status;
+  final String? statusLabel;
+  final Color? statusColor;
   final String? subtitle;
   final bool emphasized; // next-up emphasis
   final String? takenLabel;
@@ -48,6 +61,8 @@ class ReminderCard extends StatelessWidget {
   final VoidCallback? onSnooze;
   final VoidCallback? onSkip;
   final VoidCallback? onMissed;
+  final bool isActionable;
+  final bool isConfirmed;
   final int? stockCount;
   final bool isLowStock;
   final Widget? mealDetails;
@@ -55,12 +70,16 @@ class ReminderCard extends StatelessWidget {
   final int? targetCount;
   final VoidCallback? onIncrement;
   final VoidCallback? onDecrement;
+  final String? imagePath;
+  final String? recommendedFood;
+  final String? description;
+  final VoidCallback? onEdit;
+  final bool isBangla;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final accent = ReminderVisuals.color(type, colors);
-    final pending = status == ReminderStatus.pending;
 
     return Container(
       decoration: BoxDecoration(
@@ -110,16 +129,24 @@ class ReminderCard extends StatelessWidget {
                                 ? Icons.warning_amber_rounded
                                 : Icons.inventory_2_outlined,
                             size: 14,
-                            color: isLowStock ? colors.danger : colors.onSurfaceMuted,
+                            color: isLowStock
+                                ? colors.danger
+                                : colors.onSurfaceMuted,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             isLowStock
                                 ? 'Low Stock: $stockCount left'
                                 : '$stockCount left',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: isLowStock ? colors.danger : colors.onSurfaceMuted,
-                                  fontWeight: isLowStock ? FontWeight.bold : null,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                  color: isLowStock
+                                      ? colors.danger
+                                      : colors.onSurfaceMuted,
+                                  fontWeight:
+                                      isLowStock ? FontWeight.bold : null,
                                 ),
                           ),
                         ],
@@ -129,7 +156,12 @@ class ReminderCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
-              _TimeAndStatus(timeLabel: timeLabel, status: status),
+              _TimeAndStatus(
+                timeLabel: timeLabel,
+                status: status,
+                statusLabel: statusLabel,
+                statusColor: statusColor,
+              ),
             ],
           ),
           if (completedCount != null && targetCount != null) ...[
@@ -150,7 +182,8 @@ class ReminderCard extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.remove_circle_outline, size: 20),
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      constraints:
+                          const BoxConstraints(minWidth: 32, minHeight: 32),
                       tooltip: 'Remove dose',
                       onPressed: (completedCount! > 0) ? onDecrement : null,
                     ),
@@ -166,65 +199,186 @@ class ReminderCard extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.add_circle_outline, size: 20),
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      constraints:
+                          const BoxConstraints(minWidth: 32, minHeight: 32),
                       tooltip: 'Add dose',
-                      onPressed: (completedCount! < targetCount!) ? onIncrement : null,
+                      onPressed:
+                          (completedCount! < targetCount!) ? onIncrement : null,
                     ),
                   ],
                 ),
               ],
             ),
           ],
+          if (imagePath != null &&
+              imagePath!.isNotEmpty &&
+              File(imagePath!).existsSync()) ...[
+            const SizedBox(height: AppSpacing.sm),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: Image.file(
+                File(imagePath!),
+                height: 140,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+          ],
+          if (recommendedFood != null && recommendedFood!.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.restaurant_menu_outlined,
+                  size: 14,
+                  color: accent,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: RichText(
+                    text: TextSpan(
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: colors.onSurface,
+                          ),
+                      children: [
+                        TextSpan(
+                          text: isBangla ? 'প্রস্তাবিত: ' : 'Recommended: ',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: accent,
+                          ),
+                        ),
+                        TextSpan(text: recommendedFood!),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (description != null && description!.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.xs,
+              ),
+              decoration: BoxDecoration(
+                color: colors.surfaceVariant.withOpacity(0.35),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: colors.outline.withOpacity(0.3)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.format_quote_rounded,
+                    size: 14,
+                    color: colors.onSurfaceMuted,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      '"$description"',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontStyle: FontStyle.italic,
+                            color: colors.onSurface,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (mealDetails != null) mealDetails!,
-          if (onTaken != null || onSnooze != null || onSkip != null || onMissed != null) ...[
+          if (!isConfirmed &&
+              (onTaken != null ||
+                  onMissed != null ||
+                  !isActionable ||
+                  onSnooze != null ||
+                  onSkip != null)) ...[
             const SizedBox(height: AppSpacing.sm),
             Row(
               children: [
-                if (onTaken != null)
+                if (onTaken != null || !isActionable)
                   Expanded(
                     child: _QuickAction(
                       label: takenLabel ?? 'Taken',
                       icon: Icons.check_circle_outline,
                       color: colors.success,
-                      onTap: onTaken!,
+                      enabled: isActionable && onTaken != null,
+                      onTap: onTaken,
                     ),
                   ),
                 if (onSnooze != null) ...[
-                  if (onTaken != null) const SizedBox(width: AppSpacing.xs),
+                  if (onTaken != null || !isActionable)
+                    const SizedBox(width: AppSpacing.xs),
                   Expanded(
                     child: _QuickAction(
                       label: snoozeLabel ?? 'Snooze',
                       icon: Icons.snooze,
                       color: colors.warning,
-                      onTap: onSnooze!,
+                      enabled: isActionable,
+                      onTap: onSnooze,
                     ),
                   ),
                 ],
                 if (onSkip != null) ...[
-                  if (onTaken != null || onSnooze != null)
+                  if (onTaken != null || !isActionable || onSnooze != null)
                     const SizedBox(width: AppSpacing.xs),
                   Expanded(
                     child: _QuickAction(
                       label: skipLabel ?? 'Skip',
                       icon: Icons.close,
                       color: colors.onSurfaceMuted,
-                      onTap: onSkip!,
+                      enabled: isActionable,
+                      onTap: onSkip,
                     ),
                   ),
                 ],
-                if (onMissed != null) ...[
-                  if (onTaken != null || onSnooze != null || onSkip != null)
+                if (onMissed != null || !isActionable) ...[
+                  if (onTaken != null ||
+                      !isActionable ||
+                      onSnooze != null ||
+                      onSkip != null)
                     const SizedBox(width: AppSpacing.xs),
                   Expanded(
                     child: _QuickAction(
                       label: missedLabel ?? 'Missed',
                       icon: Icons.error_outline,
                       color: colors.danger,
-                      onTap: onMissed!,
+                      enabled: isActionable && onMissed != null,
+                      onTap: onMissed,
                     ),
                   ),
                 ],
               ],
+            ),
+          ],
+          if (onEdit != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                key: const Key('edit_meal_button'),
+                onPressed: onEdit,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                icon: Icon(Icons.edit_outlined, size: 15, color: colors.primary),
+                label: Text(
+                  context.l10n.actionEdit,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ),
             ),
           ],
         ],
@@ -278,7 +432,8 @@ class _MealDetailsSectionState extends State<MealDetailsSection> {
               borderRadius: BorderRadius.circular(AppRadius.md),
               onTap: () => setState(() => _isExpanded = !_isExpanded),
               child: Container(
-                constraints: const BoxConstraints(minHeight: AppSizing.minTapTarget),
+                constraints:
+                    const BoxConstraints(minHeight: AppSizing.minTapTarget),
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.sm,
                   vertical: AppSpacing.xs,
@@ -342,7 +497,10 @@ class _MealDetailsSectionState extends State<MealDetailsSection> {
                         Expanded(
                           child: Text(
                             widget.linkedMedicineSummary!,
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
                                   color: colors.onSurface,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -371,7 +529,10 @@ class _MealDetailsSectionState extends State<MealDetailsSection> {
                         Expanded(
                           child: Text(
                             widget.preMealSummary!,
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
                                   color: colors.onSurfaceMuted,
                                 ),
                             maxLines: 1,
@@ -391,32 +552,40 @@ class _MealDetailsSectionState extends State<MealDetailsSection> {
 }
 
 class _TimeAndStatus extends StatelessWidget {
-  const _TimeAndStatus({required this.timeLabel, required this.status});
+  const _TimeAndStatus({
+    required this.timeLabel,
+    required this.status,
+    this.statusLabel,
+    this.statusColor,
+  });
   final String timeLabel;
   final ReminderStatus status;
+  final String? statusLabel;
+  final Color? statusColor;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final statusColor = ReminderVisuals.statusColor(status, colors);
+    final effectiveColor =
+        statusColor ?? ReminderVisuals.statusColor(status, colors);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(timeLabel, style: Theme.of(context).textTheme.labelSmall),
         const SizedBox(height: 2),
         Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 2),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.xs, vertical: 2),
           decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.14),
+            color: effectiveColor.withOpacity(0.14),
             borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           child: Text(
-            status.name,
+            statusLabel ?? status.name,
             style: Theme.of(context)
                 .textTheme
                 .labelSmall
-                ?.copyWith(color: statusColor),
+                ?.copyWith(color: effectiveColor, fontWeight: FontWeight.w600),
           ),
         ),
       ],
@@ -429,21 +598,30 @@ class _QuickAction extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.color,
-    required this.onTap,
+    this.onTap,
+    this.enabled = true,
   });
 
   final String label;
   final IconData icon;
   final Color color;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    final effectiveColor =
+        enabled ? color : colors.onSurfaceMuted.withOpacity(0.4);
+    final effectiveBgColor = enabled
+        ? color.withOpacity(0.10)
+        : colors.surfaceVariant.withOpacity(0.35);
+
     return Material(
-      color: color.withOpacity(0.10),
+      color: effectiveBgColor,
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
-        onTap: onTap,
+        onTap: enabled ? onTap : null,
         borderRadius: BorderRadius.circular(AppRadius.md),
         child: Container(
           height: AppSizing.minTapTarget,
@@ -451,15 +629,18 @@ class _QuickAction extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 18, color: color),
+              Icon(icon, size: 18, color: effectiveColor),
               const SizedBox(width: 4),
               Flexible(
-                child: Text(label,
-                    style: Theme.of(context)
-                        .textTheme
-                        .labelSmall
-                        ?.copyWith(color: color),
-                    overflow: TextOverflow.ellipsis),
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: effectiveColor,
+                        fontWeight:
+                            enabled ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),

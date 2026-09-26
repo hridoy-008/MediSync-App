@@ -63,7 +63,8 @@ class PrescriptionRepositoryImpl implements PrescriptionRepository {
   @override
   Stream<List<Prescription>> watchAll() async* {
     yield (await getAll()).valueOrNull ?? const [];
-    yield* _store.prescriptions.watch().asyncMap((_) async =>
-        (await getAll()).valueOrNull ?? const []);
+    yield* _store.prescriptions
+        .watch()
+        .asyncMap((_) async => (await getAll()).valueOrNull ?? const []);
   }
 }

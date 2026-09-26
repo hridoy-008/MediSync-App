@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medisync/domain/entities/configs.dart';
 import 'package:medisync/domain/entities/prescription.dart';
-import 'package:medisync/domain/entities/reminder.dart';
 import 'package:medisync/domain/enums.dart';
 import 'package:medisync/features/reminders/domain/reminder_generator.dart';
 

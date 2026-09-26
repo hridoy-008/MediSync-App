@@ -11,7 +11,8 @@ sealed class Result<T> {
         Err<T>() => null,
       };
 
-  R fold<R>(R Function(T value) onSuccess, R Function(Failure failure) onError) {
+  R fold<R>(
+      R Function(T value) onSuccess, R Function(Failure failure) onError) {
     return switch (this) {
       Success<T>(:final value) => onSuccess(value),
       Err<T>(:final failure) => onError(failure),
@@ -37,8 +38,8 @@ class Failure {
   final FailureType type;
   final Object? cause;
 
-  factory Failure.network([Object? cause]) =>
-      Failure('No internet connection.', type: FailureType.network, cause: cause);
+  factory Failure.network([Object? cause]) => Failure('No internet connection.',
+      type: FailureType.network, cause: cause);
 
   factory Failure.permission(String message) =>
       Failure(message, type: FailureType.permission);

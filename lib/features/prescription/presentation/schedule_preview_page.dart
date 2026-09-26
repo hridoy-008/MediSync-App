@@ -44,8 +44,8 @@ class SchedulePreviewPage extends GetView<PrescriptionFlowController> {
                                   hour: current ~/ 60, minute: current % 60),
                             );
                             if (picked != null) {
-                              controller.updatePreviewTime(
-                                  i, timeIndex, picked.hour * 60 + picked.minute);
+                              controller.updatePreviewTime(i, timeIndex,
+                                  picked.hour * 60 + picked.minute);
                             }
                           },
                         ),
@@ -115,8 +115,7 @@ class _ReminderPreviewCard extends StatelessWidget {
             children: List.generate(times.length, (ti) {
               return ActionChip(
                 avatar: const Icon(Icons.schedule, size: 18),
-                label: Text(
-                    TimeFormat.fromMinutes(times[ti], bangla: bangla)),
+                label: Text(TimeFormat.fromMinutes(times[ti], bangla: bangla)),
                 onPressed: () => onEditTime(ti, times[ti]),
               );
             }),

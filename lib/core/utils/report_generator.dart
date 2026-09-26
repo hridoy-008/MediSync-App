@@ -15,17 +15,22 @@ class ReportGenerator {
     required bool isBangla,
   }) async {
     final pdf = pw.Document();
-    
+
     // Load the custom Noto Sans Bengali font from assets for PDF text rendering
-    final fontData = await rootBundle.load('assets/fonts/NotoSansBengali-Variable.ttf');
+    final fontData =
+        await rootBundle.load('assets/fonts/NotoSansBengali-Variable.ttf');
     final ttfFont = pw.Font.ttf(fontData);
 
     // Calculate stats
     final totalDoses = logs.length;
-    final takenDoses = logs.where((l) => l.action == ReminderAction.taken).length;
-    final skippedDoses = logs.where((l) => l.action == ReminderAction.skipped).length;
-    final missedDoses = logs.where((l) => l.action == ReminderAction.missed).length;
-    final compliance = totalDoses == 0 ? 100 : ((takenDoses / totalDoses) * 100).round();
+    final takenDoses =
+        logs.where((l) => l.action == ReminderAction.taken).length;
+    final skippedDoses =
+        logs.where((l) => l.action == ReminderAction.skipped).length;
+    final missedDoses =
+        logs.where((l) => l.action == ReminderAction.missed).length;
+    final compliance =
+        totalDoses == 0 ? 100 : ((takenDoses / totalDoses) * 100).round();
 
     pdf.addPage(
       pw.MultiPage(
@@ -46,10 +51,13 @@ class ReportGenerator {
                   children: [
                     pw.Text(
                       isBangla ? 'মেডিসিন্ক রিপোর্ট' : 'MediSync Health Report',
-                      style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+                      style: pw.TextStyle(
+                          fontSize: 24, fontWeight: pw.FontWeight.bold),
                     ),
                     pw.Text(
-                      isBangla ? 'ওষুধ সেবন ও মেনে চলার ট্র্যাকার' : 'Medication Adherence Tracker',
+                      isBangla
+                          ? 'ওষুধ সেবন ও মেনে চলার ট্র্যাকার'
+                          : 'Medication Adherence Tracker',
                       style: const pw.TextStyle(fontSize: 12),
                     ),
                   ],
@@ -63,7 +71,8 @@ class ReportGenerator {
                     ),
                     pw.Text(
                       '${isBangla ? 'মেডিকেশন কমপ্লায়েন্স' : 'Compliance'}: $compliance%',
-                      style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                      style: pw.TextStyle(
+                          fontSize: 10, fontWeight: pw.FontWeight.bold),
                     ),
                   ],
                 ),
@@ -81,10 +90,14 @@ class ReportGenerator {
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
-              _statBox(isBangla ? 'মোট অনুস্মারক' : 'Total Doses', '$totalDoses', isBangla),
-              _statBox(isBangla ? 'গৃহীত ওষুধ' : 'Taken', '$takenDoses', isBangla),
-              _statBox(isBangla ? 'বাদ দেওয়া' : 'Skipped', '$skippedDoses', isBangla),
-              _statBox(isBangla ? 'ভুলে যাওয়া' : 'Missed', '$missedDoses', isBangla),
+              _statBox(isBangla ? 'মোট অনুস্মারক' : 'Total Doses',
+                  '$totalDoses', isBangla),
+              _statBox(
+                  isBangla ? 'গৃহীত ওষুধ' : 'Taken', '$takenDoses', isBangla),
+              _statBox(isBangla ? 'বাদ দেওয়া' : 'Skipped', '$skippedDoses',
+                  isBangla),
+              _statBox(
+                  isBangla ? 'ভুলে যাওয়া' : 'Missed', '$missedDoses', isBangla),
             ],
           ),
           pw.SizedBox(height: 20),
@@ -96,11 +109,12 @@ class ReportGenerator {
           ),
           pw.SizedBox(height: 5),
           pw.TableHelper.fromTextArray(
-            headers: isBangla 
-                ? ['ওষুধের নাম', 'সেবনের নিয়ম', 'মজুদ (পিল)'] 
+            headers: isBangla
+                ? ['ওষুধের নাম', 'সেবনের নিয়ম', 'মজুদ (পিল)']
                 : ['Medicine Name', 'Instructions', 'Inventory Left'],
             data: reminders.map((r) {
-              final stock = r.stockCount?.toString() ?? (isBangla ? 'লগ করা হয়নি' : 'Not tracked');
+              final stock = r.stockCount?.toString() ??
+                  (isBangla ? 'লগ করা হয়নি' : 'Not tracked');
               return [r.title, r.subtitle, stock];
             }).toList(),
             headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
@@ -111,29 +125,44 @@ class ReportGenerator {
 
           // Log History Table
           pw.Text(
-            isBangla ? 'ওষুধ সেবনের ইতিহাস (সর্বশেষ ৩০ দিন)' : 'Adherence History (Last 30 Days)',
+            isBangla
+                ? 'ওষুধ সেবনের ইতিহাস (সর্বশেষ ৩০ দিন)'
+                : 'Adherence History (Last 30 Days)',
             style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 5),
           if (logs.isEmpty)
             pw.Text(
-              isBangla ? 'কোনো ইতিহাস পাওয়া যায়নি।' : 'No log data recorded yet.',
+              isBangla
+                  ? 'কোনো ইতিহাস পাওয়া যায়নি।'
+                  : 'No log data recorded yet.',
               style: pw.TextStyle(fontStyle: pw.FontStyle.italic),
             )
           else
             pw.TableHelper.fromTextArray(
-              headers: isBangla 
-                  ? ['তারিখ ও সময়', 'ওষুধের নাম', 'অবস্থা'] 
+              headers: isBangla
+                  ? ['তারিখ ও সময়', 'ওষুধের নাম', 'অবস্থা']
                   : ['Date & Time', 'Medicine Name', 'Status'],
               data: logs.map((l) {
-                final reminderTitle = reminders.firstWhere((r) => r.id == l.reminderId, orElse: () => Reminder(id: '', type: ReminderType.medicine, title: l.reminderId, recurrence: const RecurrenceRule(frequency: RecurrenceFrequency.daily, timesOfDay: []))).title;
+                final reminderTitle = reminders
+                    .firstWhere((r) => r.id == l.reminderId,
+                        orElse: () => Reminder(
+                            id: '',
+                            type: ReminderType.medicine,
+                            title: l.reminderId,
+                            recurrence: const RecurrenceRule(
+                                frequency: RecurrenceFrequency.daily,
+                                timesOfDay: [])))
+                    .title;
                 final statusStr = _logActionName(l.action, isBangla);
-                final timeStr = l.scheduledTime.toLocal().toString().substring(0, 16);
+                final timeStr =
+                    l.scheduledTime.toLocal().toString().substring(0, 16);
                 return [timeStr, reminderTitle, statusStr];
               }).toList(),
               headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
               cellAlignment: pw.Alignment.centerLeft,
-              headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
+              headerDecoration:
+                  const pw.BoxDecoration(color: PdfColors.grey200),
             ),
         ],
       ),
@@ -156,11 +185,16 @@ class ReportGenerator {
       ),
       child: pw.Column(
         children: [
-          pw.Text(label, style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
+          pw.Text(label,
+              style:
+                  const pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
           pw.SizedBox(height: 5),
           pw.Text(
             value,
-            style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900),
+            style: pw.TextStyle(
+                fontSize: 16,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blue900),
           ),
         ],
       ),

@@ -39,11 +39,14 @@ class RecurrenceRule {
           if (!t.isBefore(from) && t.isBefore(to)) out.add(t);
         }
       case RecurrenceFrequency.daily:
-        var day = DateTime(start.year, start.month, start.day);
+        final firstDay = DateTime(from.year, from.month, from.day);
+        final startDay = DateTime(start.year, start.month, start.day);
+        var day = firstDay;
         while (day.isBefore(to)) {
-          if (hardEnd == null || !day.isAfter(hardEnd)) {
-            final daysSinceStart = day.difference(start).inDays;
-            if (daysSinceStart >= 0 && daysSinceStart % interval == 0) {
+          final isAfterHardEnd = hardEnd != null && day.isAfter(hardEnd);
+          if (!isAfterHardEnd) {
+            final daysSinceStart = day.difference(startDay).inDays;
+            if (daysSinceStart % interval == 0) {
               for (final m in timesOfDay) {
                 final t = _at(day, m);
                 if (!t.isBefore(from) && t.isBefore(to)) out.add(t);
@@ -53,10 +56,11 @@ class RecurrenceRule {
           day = day.add(const Duration(days: 1));
         }
       case RecurrenceFrequency.weekly:
-        var day = DateTime(start.year, start.month, start.day);
+        final firstDay = DateTime(from.year, from.month, from.day);
+        var day = firstDay;
         while (day.isBefore(to)) {
-          if ((hardEnd == null || !day.isAfter(hardEnd)) &&
-              weekdays.contains(day.weekday)) {
+          final isAfterHardEnd = hardEnd != null && day.isAfter(hardEnd);
+          if (!isAfterHardEnd && weekdays.contains(day.weekday)) {
             for (final m in timesOfDay) {
               final t = _at(day, m);
               if (!t.isBefore(from) && t.isBefore(to)) out.add(t);
@@ -115,17 +119,19 @@ class RecurrenceRule {
         frequency: RecurrenceFrequency.values
             .byName(m['frequency'] as String? ?? 'daily'),
         interval: (m['interval'] as num?)?.toInt() ?? 1,
-        timesOfDay:
-            (m['timesOfDay'] as List?)?.map((e) => (e as num).toInt()).toList() ??
-                const [],
+        timesOfDay: (m['timesOfDay'] as List?)
+                ?.map((e) => (e as num).toInt())
+                .toList() ??
+            const [],
         weekdays:
             (m['weekdays'] as List?)?.map((e) => (e as num).toInt()).toList() ??
                 const [],
         startDate: m['startDate'] == null
             ? null
             : DateTime.parse(m['startDate'] as String),
-        endDate:
-            m['endDate'] == null ? null : DateTime.parse(m['endDate'] as String),
+        endDate: m['endDate'] == null
+            ? null
+            : DateTime.parse(m['endDate'] as String),
       );
 }
 

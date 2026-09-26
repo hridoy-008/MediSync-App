@@ -91,19 +91,21 @@ class Prescription extends Equatable {
         remoteImageUrl: m['remoteImageUrl'] as String?,
         rawText: m['rawText'] as String? ?? '',
         localeCode: m['localeCode'] as String? ?? 'en',
-        script:
-            enumByName(PrescriptionScript.values, m['script'], PrescriptionScript.unknown),
-        source:
-            enumByName(PrescriptionSource.values, m['source'], PrescriptionSource.camera),
-        ocrEngine:
-            enumByName(OcrEngine.values, m['ocrEngine'], OcrEngine.onDeviceMlKit),
+        script: enumByName(
+            PrescriptionScript.values, m['script'], PrescriptionScript.unknown),
+        source: enumByName(
+            PrescriptionSource.values, m['source'], PrescriptionSource.camera),
+        ocrEngine: enumByName(
+            OcrEngine.values, m['ocrEngine'], OcrEngine.onDeviceMlKit),
         reviewed: m['reviewed'] as bool? ?? false,
         medicines: (m['medicines'] as List?)
-                ?.map((e) => Medicine.fromMap(Map<String, dynamic>.from(e as Map)))
+                ?.map((e) =>
+                    Medicine.fromMap(Map<String, dynamic>.from(e as Map)))
                 .toList() ??
             const [],
         tests: (m['tests'] as List?)
-                ?.map((e) => TestItem.fromMap(Map<String, dynamic>.from(e as Map)))
+                ?.map((e) =>
+                    TestItem.fromMap(Map<String, dynamic>.from(e as Map)))
                 .toList() ??
             const [],
         instructions: (m['instructions'] as List?)

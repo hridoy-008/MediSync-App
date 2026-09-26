@@ -27,38 +27,48 @@ class BmiPlanPage extends GetView<BmiPlanController> {
             AppCard(
               child: Column(
                 children: [
-                  Obx(() => _NumberRow(
-                        label: l.height,
-                        value: controller.height.value,
-                        min: 120,
-                        max: 210,
-                        onChanged: (v) => controller.height.value = v,
-                      )),
-                  Obx(() => _NumberRow(
-                        label: l.weight,
-                        value: controller.weight.value,
-                        min: 30,
-                        max: 160,
-                        onChanged: (v) => controller.weight.value = v,
-                      )),
-                  Obx(() => _NumberRow(
-                        label: l.age,
-                        value: controller.age.value.toDouble(),
-                        min: 5,
-                        max: 100,
-                        decimals: 0,
-                        onChanged: (v) => controller.age.value = v.round(),
-                      )),
+                  Obx(
+                    () => _NumberRow(
+                      label: l.height,
+                      value: controller.height.value,
+                      min: 120,
+                      max: 210,
+                      onChanged: (v) => controller.height.value = v,
+                    ),
+                  ),
+                  Obx(
+                    () => _NumberRow(
+                      label: l.weight,
+                      value: controller.weight.value,
+                      min: 30,
+                      max: 160,
+                      onChanged: (v) => controller.weight.value = v,
+                    ),
+                  ),
+                  Obx(
+                    () => _NumberRow(
+                      label: l.age,
+                      value: controller.age.value.toDouble(),
+                      min: 5,
+                      max: 100,
+                      decimals: 0,
+                      onChanged: (v) => controller.age.value = v.round(),
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.sm),
-                  Obx(() => _SexSelector(
-                        value: controller.sex.value,
-                        onChanged: (v) => controller.sex.value = v,
-                      )),
+                  Obx(
+                    () => _SexSelector(
+                      value: controller.sex.value,
+                      onChanged: (v) => controller.sex.value = v,
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.sm),
-                  Obx(() => _ActivitySelector(
-                        value: controller.activity.value,
-                        onChanged: (v) => controller.activity.value = v,
-                      )),
+                  Obx(
+                    () => _ActivitySelector(
+                      value: controller.activity.value,
+                      onChanged: (v) => controller.activity.value = v,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -123,8 +133,9 @@ class _DietSectionState extends State<_DietSection> {
     return Obx(() {
       final diet = controller.diet.value;
       if (diet == null) return const SizedBox.shrink();
-      final hasDetails = (diet.description != null && diet.description!.isNotEmpty) ||
-          (diet.imagePath != null && diet.imagePath!.isNotEmpty);
+      final hasDetails =
+          (diet.description != null && diet.description!.isNotEmpty) ||
+              (diet.imagePath != null && diet.imagePath!.isNotEmpty);
       final fileExists = diet.imagePath != null &&
           diet.imagePath!.isNotEmpty &&
           File(diet.imagePath!).existsSync();
@@ -132,29 +143,35 @@ class _DietSectionState extends State<_DietSection> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              SectionHeader(title: l.dietChart, padding: EdgeInsets.zero),
-              TextButton.icon(
-                onPressed: () => _openDetailsDialog(
-                  context: context,
-                  l: l,
-                  currentDescription: diet.description,
-                  currentImagePath: diet.imagePath,
-                  onSave: ({description, clearDescription = false, imagePath, clearImagePath = false}) =>
-                      controller.saveDietDetails(
-                    description: description,
-                    clearDescription: clearDescription,
-                    imagePath: imagePath,
-                    clearImagePath: clearImagePath,
-                  ),
-                  onPickImage: controller.pickImage,
+          SectionHeader(
+            title: l.dietChart,
+            padding: EdgeInsets.zero,
+            trailing: TextButton.icon(
+              onPressed: () => _openDetailsDialog(
+                context: context,
+                l: l,
+                currentDescription: diet.description,
+                currentImagePath: diet.imagePath,
+                onSave: ({
+                  description,
+                  clearDescription = false,
+                  imagePath,
+                  clearImagePath = false,
+                }) =>
+                    controller.saveDietDetails(
+                  description: description,
+                  clearDescription: clearDescription,
+                  imagePath: imagePath,
+                  clearImagePath: clearImagePath,
                 ),
-                icon: Icon(hasDetails ? Icons.edit_note : Icons.add_comment_outlined, size: 18),
-                label: Text(hasDetails ? l.editDetails : l.addDetails),
+                onPickImage: controller.pickImage,
               ),
-            ],
+              icon: Icon(
+                hasDetails ? Icons.edit_note : Icons.add_comment_outlined,
+                size: 18,
+              ),
+              label: Text(hasDetails ? l.editDetails : l.addDetails),
+            ),
           ),
           InkWell(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
@@ -172,7 +189,9 @@ class _DietSectionState extends State<_DietSection> {
                     ),
                   ),
                   Icon(
-                    _isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+                    _isExpanded
+                        ? Icons.keyboard_arrow_down
+                        : Icons.keyboard_arrow_right,
                     size: 20,
                     color: context.colors.primary,
                   ),
@@ -205,10 +224,12 @@ class _DietSectionState extends State<_DietSection> {
                           fit: BoxFit.cover,
                         ),
                       ),
-                      if (diet.description != null && diet.description!.isNotEmpty)
+                      if (diet.description != null &&
+                          diet.description!.isNotEmpty)
                         const SizedBox(height: AppSpacing.xs),
                     ],
-                    if (diet.description != null && diet.description!.isNotEmpty)
+                    if (diet.description != null &&
+                        diet.description!.isNotEmpty)
                       Text(
                         diet.description!,
                         style: Theme.of(context).textTheme.bodyMedium,
@@ -218,29 +239,35 @@ class _DietSectionState extends State<_DietSection> {
               ),
               const SizedBox(height: AppSpacing.xs),
             ],
-            ...diet.meals.map((m) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                  child: AppCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(m.label,
-                            style: Theme.of(context).textTheme.titleMedium),
-                        const SizedBox(height: 4),
-                        ...m.items.map((i) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 2),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('• '),
-                                  Expanded(child: Text(i)),
-                                ],
-                              ),
-                            )),
-                      ],
-                    ),
+            ...diet.meals.map(
+              (m) => Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                child: AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        m.label,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      ...m.items.map(
+                        (i) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('• '),
+                              Expanded(child: Text(i)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                )),
+                ),
+              ),
+            ),
           ],
         ],
       );
@@ -266,39 +293,47 @@ class _ExerciseSectionState extends State<_ExerciseSection> {
     return Obx(() {
       final plan = controller.exercise.value;
       if (plan == null) return const SizedBox.shrink();
-      final hasDetails = (plan.description != null && plan.description!.isNotEmpty) ||
-          (plan.imagePath != null && plan.imagePath!.isNotEmpty);
+      final hasDetails =
+          (plan.description != null && plan.description!.isNotEmpty) ||
+              (plan.imagePath != null && plan.imagePath!.isNotEmpty);
       final fileExists = plan.imagePath != null &&
           plan.imagePath!.isNotEmpty &&
           File(plan.imagePath!).existsSync();
-      final totalMins = plan.items.fold<int>(0, (sum, e) => sum + e.durationMins);
+      final totalMins =
+          plan.items.fold<int>(0, (sum, e) => sum + e.durationMins);
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              SectionHeader(title: l.exercisePlan, padding: EdgeInsets.zero),
-              TextButton.icon(
-                onPressed: () => _openDetailsDialog(
-                  context: context,
-                  l: l,
-                  currentDescription: plan.description,
-                  currentImagePath: plan.imagePath,
-                  onSave: ({description, clearDescription = false, imagePath, clearImagePath = false}) =>
-                      controller.saveExerciseDetails(
-                    description: description,
-                    clearDescription: clearDescription,
-                    imagePath: imagePath,
-                    clearImagePath: clearImagePath,
-                  ),
-                  onPickImage: controller.pickImage,
+          SectionHeader(
+            title: l.exercisePlan,
+            padding: EdgeInsets.zero,
+            trailing: TextButton.icon(
+              onPressed: () => _openDetailsDialog(
+                context: context,
+                l: l,
+                currentDescription: plan.description,
+                currentImagePath: plan.imagePath,
+                onSave: ({
+                  description,
+                  clearDescription = false,
+                  imagePath,
+                  clearImagePath = false,
+                }) =>
+                    controller.saveExerciseDetails(
+                  description: description,
+                  clearDescription: clearDescription,
+                  imagePath: imagePath,
+                  clearImagePath: clearImagePath,
                 ),
-                icon: Icon(hasDetails ? Icons.edit_note : Icons.add_comment_outlined, size: 18),
-                label: Text(hasDetails ? l.editDetails : l.addDetails),
+                onPickImage: controller.pickImage,
               ),
-            ],
+              icon: Icon(
+                hasDetails ? Icons.edit_note : Icons.add_comment_outlined,
+                size: 18,
+              ),
+              label: Text(hasDetails ? l.editDetails : l.addDetails),
+            ),
           ),
           InkWell(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
@@ -316,7 +351,9 @@ class _ExerciseSectionState extends State<_ExerciseSection> {
                     ),
                   ),
                   Icon(
-                    _isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+                    _isExpanded
+                        ? Icons.keyboard_arrow_down
+                        : Icons.keyboard_arrow_right,
                     size: 20,
                     color: context.colors.primary,
                   ),
@@ -349,10 +386,12 @@ class _ExerciseSectionState extends State<_ExerciseSection> {
                           fit: BoxFit.cover,
                         ),
                       ),
-                      if (plan.description != null && plan.description!.isNotEmpty)
+                      if (plan.description != null &&
+                          plan.description!.isNotEmpty)
                         const SizedBox(height: AppSpacing.xs),
                     ],
-                    if (plan.description != null && plan.description!.isNotEmpty)
+                    if (plan.description != null &&
+                        plan.description!.isNotEmpty)
                       Text(
                         plan.description!,
                         style: Theme.of(context).textTheme.bodyMedium,
@@ -370,14 +409,18 @@ class _ExerciseSectionState extends State<_ExerciseSection> {
                     final e = entry.value;
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: Icon(_iconFor(e.iconKey),
-                          color: context.colors.secondary),
+                      leading: Icon(
+                        _iconFor(e.iconKey),
+                        color: context.colors.secondary,
+                      ),
                       title: Text(e.name),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('${e.durationMins} min',
-                              style: Theme.of(context).textTheme.labelSmall),
+                          Text(
+                            '${e.durationMins} min',
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
                           IconButton(
                             icon: const Icon(Icons.edit_outlined, size: 18),
                             tooltip: l.editExerciseTime,
@@ -386,14 +429,19 @@ class _ExerciseSectionState extends State<_ExerciseSection> {
                               l: l,
                               exercise: e,
                               onSave: (newMins) =>
-                                  controller.updateExerciseDuration(index, newMins),
+                                  controller.updateExerciseDuration(
+                                index,
+                                newMins,
+                              ),
                             ),
                           ),
                           IconButton(
                             icon: Icon(
                               Icons.delete_outline,
                               size: 18,
-                              color: plan.items.length > 1 ? Colors.red : Colors.grey,
+                              color: plan.items.length > 1
+                                  ? Colors.red
+                                  : Colors.grey,
                             ),
                             tooltip: l.removeExercise,
                             onPressed: plan.items.length > 1
@@ -411,8 +459,8 @@ class _ExerciseSectionState extends State<_ExerciseSection> {
                       onPressed: () => _openAddExerciseDialog(
                         context: context,
                         l: l,
-                        onAdd: (name, iconKey) =>
-                            controller.addExercise(name: name, iconKey: iconKey),
+                        onAdd: (name, iconKey) => controller.addExercise(
+                            name: name, iconKey: iconKey),
                       ),
                       icon: const Icon(Icons.add, size: 18),
                       label: Text(l.addExercise),
@@ -442,7 +490,8 @@ Future<void> _openEditDurationDialog({
   required ExerciseItem exercise,
   required ValueChanged<int> onSave,
 }) {
-  final controller = TextEditingController(text: exercise.durationMins.toString());
+  final controller =
+      TextEditingController(text: exercise.durationMins.toString());
   return showDialog<void>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -462,7 +511,8 @@ Future<void> _openEditDurationDialog({
         ),
         ElevatedButton(
           onPressed: () {
-            final mins = int.tryParse(controller.text.trim()) ?? exercise.durationMins;
+            final mins =
+                int.tryParse(controller.text.trim()) ?? exercise.durationMins;
             onSave(mins);
             Navigator.pop(ctx);
           },
@@ -496,17 +546,19 @@ Future<void> _openAddExerciseDialog({
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          Obx(() => DropdownButtonFormField<String>(
-                value: selectedIcon.value,
-                decoration: const InputDecoration(border: OutlineInputBorder()),
-                items: const [
-                  DropdownMenuItem(value: 'walk', child: Text('Walk')),
-                  DropdownMenuItem(value: 'run', child: Text('Run / Cardio')),
-                  DropdownMenuItem(value: 'strength', child: Text('Strength')),
-                  DropdownMenuItem(value: 'yoga', child: Text('Yoga / Stretch')),
-                ],
-                onChanged: (v) => v == null ? null : selectedIcon.value = v,
-              )),
+          Obx(
+            () => DropdownButtonFormField<String>(
+              value: selectedIcon.value,
+              decoration: const InputDecoration(border: OutlineInputBorder()),
+              items: const [
+                DropdownMenuItem(value: 'walk', child: Text('Walk')),
+                DropdownMenuItem(value: 'run', child: Text('Run / Cardio')),
+                DropdownMenuItem(value: 'strength', child: Text('Strength')),
+                DropdownMenuItem(value: 'yoga', child: Text('Yoga / Stretch')),
+              ],
+              onChanged: (v) => v == null ? null : selectedIcon.value = v,
+            ),
+          ),
         ],
       ),
       actions: [
@@ -567,8 +619,10 @@ Future<void> _openDetailsDialog({
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(l.planDetails,
-                      style: Theme.of(ctx).textTheme.titleLarge),
+                  Text(
+                    l.planDetails,
+                    style: Theme.of(ctx).textTheme.titleLarge,
+                  ),
                   IconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(ctx),
@@ -588,7 +642,8 @@ Future<void> _openDetailsDialog({
               const SizedBox(height: AppSpacing.md),
               Obx(() {
                 final path = selectedPath.value;
-                final hasImage = path != null && path.isNotEmpty && File(path).existsSync();
+                final hasImage =
+                    path != null && path.isNotEmpty && File(path).existsSync();
                 if (hasImage) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -607,7 +662,8 @@ Future<void> _openDetailsDialog({
                         children: [
                           OutlinedButton.icon(
                             onPressed: () async {
-                              final newPath = await onPickImage(ImageSource.gallery);
+                              final newPath =
+                                  await onPickImage(ImageSource.gallery);
                               if (newPath != null) selectedPath.value = newPath;
                             },
                             icon: const Icon(Icons.photo_library, size: 16),
@@ -616,7 +672,8 @@ Future<void> _openDetailsDialog({
                           const SizedBox(width: AppSpacing.xs),
                           OutlinedButton.icon(
                             onPressed: () async {
-                              final newPath = await onPickImage(ImageSource.camera);
+                              final newPath =
+                                  await onPickImage(ImageSource.camera);
                               if (newPath != null) selectedPath.value = newPath;
                             },
                             icon: const Icon(Icons.camera_alt, size: 16),
@@ -624,7 +681,8 @@ Future<void> _openDetailsDialog({
                           ),
                           const Spacer(),
                           IconButton(
-                            icon: const Icon(Icons.delete_outline, color: Colors.red),
+                            icon: const Icon(Icons.delete_outline,
+                                color: Colors.red),
                             tooltip: l.removeImage,
                             onPressed: () => selectedPath.value = null,
                           ),
@@ -671,6 +729,7 @@ Future<void> _openDetailsDialog({
                   const SizedBox(width: AppSpacing.xs),
                   AppButton(
                     label: l.actionSave,
+                    expand: false,
                     onPressed: () async {
                       final newText = controller.text.trim();
                       final clearDesc = newText.isEmpty;
@@ -730,9 +789,11 @@ class _NumberRow extends StatelessWidget {
         ),
         SizedBox(
           width: 48,
-          child: Text(value.toStringAsFixed(decimals),
-              textAlign: TextAlign.end,
-              style: Theme.of(context).textTheme.titleMedium),
+          child: Text(
+            value.toStringAsFixed(decimals),
+            textAlign: TextAlign.end,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
         ),
       ],
     );

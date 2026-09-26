@@ -28,11 +28,13 @@ class _ReviewPageState extends State<ReviewPage> {
 
     final isBangla = Get.find<LocaleController>().isBangla;
     return warnings.map((w) {
-      final bannerKind = w.severity == 'danger' ? BannerKind.danger : BannerKind.warning;
+      final bannerKind =
+          w.severity == 'danger' ? BannerKind.danger : BannerKind.warning;
       return Padding(
         padding: const EdgeInsets.only(bottom: AppSpacing.sm),
         child: DisclaimerBanner(
-          message: '${isBangla ? 'সতর্কতা' : 'Warning'}: ${isBangla ? w.messageBn : w.messageEn}',
+          message:
+              '${isBangla ? 'সতর্কতা' : 'Warning'}: ${isBangla ? w.messageBn : w.messageEn}',
           kind: bannerKind,
         ),
       );
@@ -61,7 +63,8 @@ class _ReviewPageState extends State<ReviewPage> {
               ),
               const SizedBox(height: AppSpacing.md),
               ..._buildInteractionWarnings(draft.medicines),
-              SectionHeader(title: l.sectionMedicines, padding: EdgeInsets.zero),
+              SectionHeader(
+                  title: l.sectionMedicines, padding: EdgeInsets.zero),
               const SizedBox(height: AppSpacing.xs),
               ...List.generate(
                 draft.medicines.length,
@@ -92,9 +95,8 @@ class _ReviewPageState extends State<ReviewPage> {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                     child: AppCard(
-                      borderColor: t.hasLowConfidence
-                          ? context.colors.warning
-                          : null,
+                      borderColor:
+                          t.hasLowConfidence ? context.colors.warning : null,
                       child: Row(
                         children: [
                           Icon(Icons.biotech_outlined,
@@ -170,8 +172,8 @@ class _MedicineEditorState extends State<_MedicineEditor> {
       TextEditingController(text: widget.medicine.dose);
   late final TextEditingController _stockCount =
       TextEditingController(text: widget.medicine.stockCount?.toString() ?? '');
-  late final TextEditingController _lowStockThreshold =
-      TextEditingController(text: widget.medicine.lowStockThreshold?.toString() ?? '5');
+  late final TextEditingController _lowStockThreshold = TextEditingController(
+      text: widget.medicine.lowStockThreshold?.toString() ?? '5');
   late Medicine _m = widget.medicine;
 
   late bool _showStockOptions = widget.medicine.stockAlertEnabled;
@@ -237,7 +239,8 @@ class _MedicineEditorState extends State<_MedicineEditor> {
           const SizedBox(height: AppSpacing.xs),
           Row(
             children: [
-              Expanded(child: _FrequencyStepper(
+              Expanded(
+                  child: _FrequencyStepper(
                 value: _m.frequencyPerDay,
                 label: l.fieldFrequency,
                 onChanged: (v) {
@@ -246,7 +249,8 @@ class _MedicineEditorState extends State<_MedicineEditor> {
                 },
               )),
               const SizedBox(width: AppSpacing.sm),
-              Expanded(child: _TimingDropdown(
+              Expanded(
+                  child: _TimingDropdown(
                 value: _m.timing,
                 onChanged: (v) {
                   setState(() => _m = _m.copyWith(timing: v));
@@ -268,7 +272,8 @@ class _MedicineEditorState extends State<_MedicineEditor> {
               },
               borderRadius: BorderRadius.circular(AppRadius.sm),
               child: Container(
-                constraints: const BoxConstraints(minHeight: AppSizing.minTapTarget),
+                constraints:
+                    const BoxConstraints(minHeight: AppSizing.minTapTarget),
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Row(
                   children: [
@@ -276,7 +281,9 @@ class _MedicineEditorState extends State<_MedicineEditor> {
                       width: 32,
                       height: 32,
                       child: Icon(
-                        _showStockOptions ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+                        _showStockOptions
+                            ? Icons.keyboard_arrow_down
+                            : Icons.keyboard_arrow_right,
                         size: 20,
                         color: context.colors.primary,
                       ),
@@ -320,7 +327,9 @@ class _MedicineEditorState extends State<_MedicineEditor> {
                       controller: _stockCount,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                        labelText: Get.find<LocaleController>().isBangla ? 'বর্তমান স্টক' : 'Current Stock',
+                        labelText: Get.find<LocaleController>().isBangla
+                            ? 'বর্তমান স্টক'
+                            : 'Current Stock',
                         hintText: 'e.g. 30',
                       ),
                       onChanged: (val) {
@@ -336,7 +345,9 @@ class _MedicineEditorState extends State<_MedicineEditor> {
                       controller: _lowStockThreshold,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                        labelText: Get.find<LocaleController>().isBangla ? 'কম স্টকের মাত্রা' : 'Low Threshold',
+                        labelText: Get.find<LocaleController>().isBangla
+                            ? 'কম স্টকের মাত্রা'
+                            : 'Low Threshold',
                         hintText: 'e.g. 5',
                       ),
                       onChanged: (val) {

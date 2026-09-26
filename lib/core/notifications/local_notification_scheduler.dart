@@ -48,8 +48,7 @@ class LocalNotificationScheduler implements ReminderScheduler {
       tz.setLocalLocation(tz.UTC);
     }
 
-    const androidInit =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosInit = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -116,7 +115,8 @@ class LocalNotificationScheduler implements ReminderScheduler {
       await _scheduleOne(item.reminder, item.time);
       count++;
     }
-    _log.i('Scheduled $count occurrences across ${reminders.length} reminders.');
+    _log.i(
+        'Scheduled $count occurrences across ${reminders.length} reminders.');
   }
 
   Future<void> _scheduleOne(Reminder reminder, DateTime fireTime) async {
@@ -173,7 +173,8 @@ class LocalNotificationScheduler implements ReminderScheduler {
         payload: payload,
       );
     } catch (e) {
-      _log.w('Exact or full-screen schedule failed, retrying with safe fallback: $e');
+      _log.w(
+          'Exact or full-screen schedule failed, retrying with safe fallback: $e');
       try {
         await _plugin.zonedSchedule(
           reminder.notificationIdFor(fireTime),
@@ -242,9 +243,8 @@ class LocalNotificationScheduler implements ReminderScheduler {
         ? (isBangla ? 'স্টক শেষের সতর্কতা' : 'Out of Stock Alert')
         : (isBangla ? 'কম স্টকের সতর্কতা' : 'Low Stock Alert');
 
-    final countStr = isBangla
-        ? BanglaNumerals.toBangla(stockCount)
-        : stockCount.toString();
+    final countStr =
+        isBangla ? BanglaNumerals.toBangla(stockCount) : stockCount.toString();
 
     final body = isOutOfStock
         ? (isBangla

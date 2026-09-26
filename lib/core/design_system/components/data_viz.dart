@@ -174,7 +174,8 @@ class AdherenceHeatmap extends StatelessWidget {
     final now = DateTime.now();
     // Generate dates for the last 28 days (4 weeks)
     final days = List.generate(28, (index) {
-      return DateTime(now.year, now.month, now.day).subtract(Duration(days: 27 - index));
+      return DateTime(now.year, now.month, now.day)
+          .subtract(Duration(days: 27 - index));
     });
 
     return Column(
@@ -198,8 +199,10 @@ class AdherenceHeatmap extends StatelessWidget {
           itemBuilder: (context, index) {
             final day = days[index];
             final dayLogs = logs.where((l) {
-              final d = l.scheduledTime.toLocal();
-              return d.year == day.year && d.month == day.month && d.day == day.day;
+              final d = (l.confirmedAt ?? l.scheduledTime).toLocal();
+              return d.year == day.year &&
+                  d.month == day.month &&
+                  d.day == day.day;
             }).toList();
 
             final isSelected = selectedDate != null &&
@@ -208,7 +211,8 @@ class AdherenceHeatmap extends StatelessWidget {
                 selectedDate!.day == day.day;
 
             final total = dayLogs.length;
-            final taken = dayLogs.where((l) => l.action == ReminderAction.taken).length;
+            final taken =
+                dayLogs.where((l) => l.action == ReminderAction.taken).length;
             final compliance = total == 0 ? null : (taken / total);
 
             Color color = colors.surfaceVariant;
@@ -224,39 +228,36 @@ class AdherenceHeatmap extends StatelessWidget {
               }
             }
 
-            return Tooltip(
-              message: total == 0
-                  ? (isBangla ? 'কোনো ওষুধ ছিল না' : 'No medicines')
-                  : '${day.day}/${day.month}: ${(compliance! * 100).round()}% ${isBangla ? 'মেনে চলা হয়েছে' : 'adhered'} ($taken/$total)',
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => onDateSelected?.call(day),
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                final dateStr =
+                    '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
+                debugPrint('[HISTORY CLICK] DATE CLICKED: $dateStr');
+                onDateSelected?.call(day);
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: color,
                   borderRadius: BorderRadius.circular(6),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: isSelected
-                            ? colors.primary
-                            : colors.outline.withOpacity(0.2),
-                        width: isSelected ? 2.5 : 1,
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '${day.day}',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: compliance != null
-                                ? Colors.white
-                                : colors.onSurfaceMuted,
-                            fontWeight: compliance != null || isSelected
-                                ? FontWeight.bold
-                                : null,
-                          ),
-                    ),
+                  border: Border.all(
+                    color: isSelected
+                        ? colors.primary
+                        : colors.outline.withOpacity(0.2),
+                    width: isSelected ? 2.5 : 1,
                   ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  '${day.day}',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: compliance != null
+                            ? Colors.white
+                            : colors.onSurfaceMuted,
+                        fontWeight: compliance != null || isSelected
+                            ? FontWeight.bold
+                            : null,
+                      ),
                 ),
               ),
             );

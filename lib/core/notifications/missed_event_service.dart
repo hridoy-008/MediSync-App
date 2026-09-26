@@ -5,7 +5,6 @@ import '../../domain/entities/reminder.dart';
 import '../../domain/enums.dart';
 import '../../domain/repositories/reminder_repository.dart';
 import '../utils/logger.dart';
-import 'notification_channels.dart';
 import 'reminder_payload.dart';
 
 /// Grace-window missed-event detection + gentle follow-up nudge (PRD P0-9,
@@ -24,8 +23,8 @@ class MissedEventService {
     final from = now.subtract(Duration(hours: lookbackHours));
 
     final reminders = (await _reminders.getEnabled()).valueOrNull ?? const [];
-    final logs = (await _reminders.getLogs(from: from, to: now)).valueOrNull ??
-        const [];
+    final logs =
+        (await _reminders.getLogs(from: from, to: now)).valueOrNull ?? const [];
     final resolved = {
       for (final l in logs)
         if (l.action != ReminderAction.missed)
@@ -34,7 +33,8 @@ class MissedEventService {
 
     for (final r in reminders) {
       // Only nudge for medicine + meal (habit reminders aren't "missed").
-      if (r.type == ReminderType.water || r.type == ReminderType.sleep) continue;
+      if (r.type == ReminderType.water || r.type == ReminderType.sleep)
+        continue;
 
       for (final occ in r.recurrence.occurrencesBetween(from, now)) {
         final graceEnd = occ.add(Duration(minutes: r.graceWindowMins));

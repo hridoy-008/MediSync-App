@@ -8,8 +8,8 @@ class SectionHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.trailing,
-    this.padding =
-        const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.xs),
+    this.padding = const EdgeInsets.fromLTRB(
+        AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.xs),
   });
 
   final String title;
@@ -18,16 +18,47 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: padding,
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(title,
-                style: Theme.of(context).textTheme.headlineMedium),
-          ),
-          if (trailing != null) trailing!,
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final hasBoundedWidth = constraints.hasBoundedWidth;
+
+          if (hasBoundedWidth) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.headlineMedium,
+                  ),
+                ),
+                if (trailing != null) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  trailing!,
+                ],
+              ],
+            );
+          }
+
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                title,
+                style: theme.textTheme.headlineMedium,
+              ),
+              if (trailing != null) ...[
+                const SizedBox(width: AppSpacing.sm),
+                trailing!,
+              ],
+            ],
+          );
+        },
       ),
     );
   }

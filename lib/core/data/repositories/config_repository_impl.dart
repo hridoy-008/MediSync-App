@@ -26,7 +26,8 @@ class ConfigRepositoryImpl implements ConfigRepository {
       final meals = _store.meals.values
           .map((m) => MealConfig.fromMap(LocalStore.normalize(m)))
           .toList()
-        ..sort((a, b) => a.minutesFromMidnight.compareTo(b.minutesFromMidnight));
+        ..sort(
+            (a, b) => a.minutesFromMidnight.compareTo(b.minutesFromMidnight));
       return Success(meals);
     } catch (e) {
       return Err(Failure.cache(e));

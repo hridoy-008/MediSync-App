@@ -51,12 +51,13 @@ class DietPlan extends Equatable {
       };
 
   factory DietPlan.fromMap(Map<String, dynamic> m) => DietPlan(
-        bmiCategory:
-            enumByName(BmiCategory.values, m['bmiCategory'], BmiCategory.normal),
+        bmiCategory: enumByName(
+            BmiCategory.values, m['bmiCategory'], BmiCategory.normal),
         localeCode: m['localeCode'] as String? ?? 'en',
         targetKcal: (m['targetKcal'] as num?)?.toInt() ?? 2000,
         meals: (m['meals'] as List?)
-                ?.map((e) => DietMeal.fromMap(Map<String, dynamic>.from(e as Map)))
+                ?.map((e) =>
+                    DietMeal.fromMap(Map<String, dynamic>.from(e as Map)))
                 .toList() ??
             const [],
         description: m['description'] as String?,
@@ -126,8 +127,8 @@ class ExercisePlan extends Equatable {
       };
 
   factory ExercisePlan.fromMap(Map<String, dynamic> m) => ExercisePlan(
-        bmiCategory:
-            enumByName(BmiCategory.values, m['bmiCategory'], BmiCategory.normal),
+        bmiCategory: enumByName(
+            BmiCategory.values, m['bmiCategory'], BmiCategory.normal),
         localeCode: m['localeCode'] as String? ?? 'en',
         items: (m['items'] as List?)
                 ?.map((e) =>

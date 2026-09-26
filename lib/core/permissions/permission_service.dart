@@ -54,8 +54,7 @@ class PermissionService {
 
   Future<Map<AppPermission, bool>> currentStatus() async {
     return {
-      AppPermission.notifications:
-          await Permission.notification.isGranted,
+      AppPermission.notifications: await Permission.notification.isGranted,
       AppPermission.camera: await Permission.camera.isGranted,
       AppPermission.batteryOptimization:
           await Permission.ignoreBatteryOptimizations.isGranted,

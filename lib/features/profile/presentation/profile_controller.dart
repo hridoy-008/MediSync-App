@@ -7,12 +7,10 @@ import '../../../core/permissions/permission_service.dart';
 import '../../../core/utils/report_generator.dart';
 import '../../../core/utils/voice_synthesizer.dart';
 import '../../../domain/entities/auth_user.dart';
-import '../../../domain/entities/reminder.dart';
 import '../../../domain/entities/user_profile.dart';
 import '../../../domain/repositories/auth_repository.dart';
 import '../../../domain/repositories/profile_repository.dart';
 import '../../../domain/repositories/reminder_repository.dart';
-import '../../../domain/enums.dart';
 
 class ProfileController extends GetxController {
   ProfileController({
@@ -75,7 +73,9 @@ class ProfileController extends GetxController {
   void testVoiceReminder() {
     VoiceSynthesizer.speakReminder(
       title: _locale.isBangla ? 'নাপা এক্সট্রা' : 'Napa Extra',
-      subtitle: _locale.isBangla ? '১টি ট্যাবলেট · খাবার পরে' : '1 tablet · after food',
+      subtitle: _locale.isBangla
+          ? '১টি ট্যাবলেট · খাবার পরে'
+          : '1 tablet · after food',
       isBangla: _locale.isBangla,
     );
   }
@@ -99,10 +99,10 @@ class ProfileController extends GetxController {
       final repo = Get.find<ReminderRepository>();
       final remindersResult = await repo.getAll();
       final logsResult = await repo.getLogs();
-      
+
       final reminders = remindersResult.valueOrNull ?? [];
       final logs = logsResult.valueOrNull ?? [];
-      
+
       await ReportGenerator.generateAndShare(
         reminders: reminders,
         logs: logs,
@@ -111,7 +111,9 @@ class ProfileController extends GetxController {
     } catch (e) {
       Get.snackbar(
         _locale.isBangla ? 'ত্রুটি' : 'Error',
-        _locale.isBangla ? 'রিপোর্ট জেনারেট করা যায়নি' : 'Could not generate report: $e',
+        _locale.isBangla
+            ? 'রিপোর্ট জেনারেট করা যায়নি'
+            : 'Could not generate report: $e',
         snackPosition: SnackPosition.BOTTOM,
       );
     }

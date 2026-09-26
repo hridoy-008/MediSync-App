@@ -26,8 +26,8 @@ class AppTheme {
       outline: c.outline,
     );
 
-    final textTheme = AppTypography.textTheme(c.onSurface, c.onSurfaceMuted,
-        bangla: bangla);
+    final textTheme =
+        AppTypography.textTheme(c.onSurface, c.onSurfaceMuted, bangla: bangla);
 
     return ThemeData(
       useMaterial3: true,
@@ -54,7 +54,7 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: c.primary,
           foregroundColor: c.onPrimary,
-          minimumSize: const Size.fromHeight(AppSizing.minTapTarget),
+          minimumSize: const Size(0, AppSizing.minTapTarget),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
@@ -65,7 +65,7 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: c.primary,
           side: BorderSide(color: c.primary),
-          minimumSize: const Size.fromHeight(AppSizing.minTapTarget),
+          minimumSize: const Size(0, AppSizing.minTapTarget),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
@@ -118,12 +118,15 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
 
   @override
   ThemeExtension<AppColorsExtension> lerp(
-      covariant ThemeExtension<AppColorsExtension>? other, double t) =>
+          covariant ThemeExtension<AppColorsExtension>? other, double t) =>
       this;
 }
 
 /// Convenience accessor.
 extension AppColorsContext on BuildContext {
   AppColors get colors =>
-      Theme.of(this).extension<AppColorsExtension>()!.colors;
+      Theme.of(this).extension<AppColorsExtension>()?.colors ??
+      (Theme.of(this).brightness == Brightness.dark
+          ? AppColors.dark
+          : AppColors.light);
 }

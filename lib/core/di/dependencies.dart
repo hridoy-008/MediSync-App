@@ -47,8 +47,8 @@ void registerDependencies({
   final reminderRepo = ReminderRepositoryImpl(store, mirror);
   final configRepo = ConfigRepositoryImpl(store, mirror);
   Get
-    ..put<PrescriptionRepository>(
-        PrescriptionRepositoryImpl(store, mirror), permanent: true)
+    ..put<PrescriptionRepository>(PrescriptionRepositoryImpl(store, mirror),
+        permanent: true)
     ..put<ReminderRepository>(reminderRepo, permanent: true)
     ..put<ConfigRepository>(configRepo, permanent: true)
     ..put<ProfileRepository>(ProfileRepositoryImpl(store, mirror),

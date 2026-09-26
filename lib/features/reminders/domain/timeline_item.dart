@@ -1,3 +1,4 @@
+import '../../../domain/entities/configs.dart';
 import '../../../domain/entities/reminder.dart';
 import '../../../domain/enums.dart';
 
@@ -9,6 +10,7 @@ class TimelineItem {
     required this.status,
     this.linkedMedicineSummary,
     this.preMealSummary,
+    this.mealConfig,
   });
 
   final Reminder reminder;
@@ -16,14 +18,19 @@ class TimelineItem {
   final ReminderStatus status;
   final String? linkedMedicineSummary;
   final String? preMealSummary;
+  final MealConfig? mealConfig;
 
   ReminderType get type => reminder.type;
   bool get isPending => status == ReminderStatus.pending;
+  String? get mealDescription => mealConfig?.description;
+  String? get mealImagePath => mealConfig?.imagePath;
+  String? get recommendedFood => mealConfig?.recommendedFood;
 
   TimelineItem copyWith({
     ReminderStatus? status,
     String? linkedMedicineSummary,
     String? preMealSummary,
+    MealConfig? mealConfig,
   }) =>
       TimelineItem(
         reminder: reminder,
@@ -32,5 +39,6 @@ class TimelineItem {
         linkedMedicineSummary:
             linkedMedicineSummary ?? this.linkedMedicineSummary,
         preMealSummary: preMealSummary ?? this.preMealSummary,
+        mealConfig: mealConfig ?? this.mealConfig,
       );
 }

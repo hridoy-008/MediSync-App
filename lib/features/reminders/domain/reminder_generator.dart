@@ -80,8 +80,8 @@ class ReminderGenerator {
       ..sort((a, b) => a.minutesFromMidnight.compareTo(b.minutesFromMidnight));
 
     // 1. Try triple dose pattern parsing from med.dose or med.notes
-    final pattern = _parseTripleDosePattern(med.dose) ??
-        _parseTripleDosePattern(med.notes);
+    final pattern =
+        _parseTripleDosePattern(med.dose) ?? _parseTripleDosePattern(med.notes);
 
     if (pattern != null && enabledMeals.isNotEmpty) {
       final offset = switch (med.timing) {
@@ -130,10 +130,11 @@ class ReminderGenerator {
     final now = DateTime.now();
     final out = <Reminder>[];
     for (final m in meals.where((m) => m.enabled)) {
-      final title = (m.isCustom && m.customName != null && m.customName!.isNotEmpty)
-          ? m.customName!
-          : _mealTitle(m.mealType);
-      
+      final title =
+          (m.isCustom && m.customName != null && m.customName!.isNotEmpty)
+              ? m.customName!
+              : _mealTitle(m.mealType);
+
       out.add(Reminder(
         id: 'rem_meal_${m.id}',
         type: ReminderType.meal,
@@ -223,7 +224,8 @@ class ReminderGenerator {
       ),
     ];
     if (cfg.windDownMins > 0) {
-      final wind = (cfg.bedtimeMinutes - cfg.windDownMins).clamp(0, 24 * 60 - 1);
+      final wind =
+          (cfg.bedtimeMinutes - cfg.windDownMins).clamp(0, 24 * 60 - 1);
       reminders.add(Reminder(
         id: 'rem_sleep_winddown',
         type: ReminderType.sleep,

@@ -62,7 +62,10 @@ class PrescriptionListPage extends GetView<PrescriptionListController> {
                         Expanded(
                           child: Text(
                             l.lowStockTitle,
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
                           ),
@@ -81,7 +84,10 @@ class PrescriptionListPage extends GetView<PrescriptionListController> {
                               bangla
                                   ? BanglaNumerals.toBangla(lowStockCount)
                                   : lowStockCount.toString(),
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -250,7 +256,8 @@ class _PrescriptionTileState extends State<_PrescriptionTile> {
               ...widget.prescription.medicines.map((m) {
                 final timingStr = _timingText(l, m.timing);
                 final doseStr = m.dose.isNotEmpty ? ' (${m.dose})' : '';
-                final freqStr = '${BanglaNumerals.localize(m.frequencyPerDay, isBangla: widget.bangla)}x/day';
+                final freqStr =
+                    '${BanglaNumerals.localize(m.frequencyPerDay, isBangla: widget.bangla)}x/day';
                 return Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.xs),
                   child: Row(

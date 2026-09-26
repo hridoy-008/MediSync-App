@@ -42,8 +42,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
   @override
   Stream<UserProfile> watch() async* {
     yield _read();
-    yield* _store.singletons
-        .watch(key: _key)
-        .map((_) => _read());
+    yield* _store.singletons.watch(key: _key).map((_) => _read());
   }
 }

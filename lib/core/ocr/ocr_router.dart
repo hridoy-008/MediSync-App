@@ -7,7 +7,6 @@ import '../utils/logger.dart';
 import '../utils/result.dart';
 import 'cloud_ocr_service.dart';
 import 'mlkit_ocr_service.dart';
-import 'ocr_service.dart';
 import 'prescription_structurer.dart';
 
 /// Orchestrates the extraction pipeline (TRD §5): on-device first, route
@@ -46,8 +45,8 @@ class OcrRouter {
     var script = onDeviceRes.valueOrNull?.script ?? PrescriptionScript.unknown;
 
     // 2) Route Bangla/mixed to cloud when enabled + consented + reachable.
-    final needsCloud =
-        script == PrescriptionScript.bangla || script == PrescriptionScript.mixed;
+    final needsCloud = script == PrescriptionScript.bangla ||
+        script == PrescriptionScript.mixed;
     if (needsCloud && features.cloudOcr && cloudConsentGranted) {
       final cloudRes = await _cloud.recognize(imagePath);
       cloudRes.fold(
@@ -56,7 +55,8 @@ class OcrRouter {
           engine = OcrEngine.cloudVision;
           script = ok.script;
         },
-        (err) => _log.w('Cloud OCR fell back to on-device text: ${err.message}'),
+        (err) =>
+            _log.w('Cloud OCR fell back to on-device text: ${err.message}'),
       );
     }
 

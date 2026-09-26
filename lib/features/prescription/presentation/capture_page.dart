@@ -64,8 +64,8 @@ class _CaptureTile extends StatelessWidget {
           Icon(icon, color: context.colors.primary),
           const SizedBox(width: AppSpacing.md),
           Expanded(
-              child: Text(label,
-                  style: Theme.of(context).textTheme.titleMedium)),
+              child:
+                  Text(label, style: Theme.of(context).textTheme.titleMedium)),
           const Icon(Icons.chevron_right),
         ],
       ),

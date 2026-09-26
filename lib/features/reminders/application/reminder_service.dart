@@ -64,8 +64,12 @@ class ReminderService {
       ..._generator.fromSleep(sleep),
     ];
     // Replace existing habit reminders (medicine reminders are untouched).
-    for (final id in ['rem_water', 'rem_sleep_bedtime', 'rem_sleep_wake',
-        'rem_sleep_winddown']) {
+    for (final id in [
+      'rem_water',
+      'rem_sleep_bedtime',
+      'rem_sleep_wake',
+      'rem_sleep_winddown'
+    ]) {
       await _repo.delete(id);
     }
     final existing = (await _repo.getAll()).valueOrNull ?? const [];

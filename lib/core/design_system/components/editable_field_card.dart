@@ -7,7 +7,8 @@ import '../tokens.dart';
 /// Confidence chip — low-confidence OCR fields are visually flagged so the
 /// user's eye goes straight to what to verify (PRD P0-2, Design doc §5.3).
 class ConfidenceFlag extends StatelessWidget {
-  const ConfidenceFlag({super.key, required this.confidence, required this.label});
+  const ConfidenceFlag(
+      {super.key, required this.confidence, required this.label});
   final FieldConfidence confidence;
   final String label; // already-localized "Please verify"
 

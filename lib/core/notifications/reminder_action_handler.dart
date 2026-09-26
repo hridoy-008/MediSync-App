@@ -93,7 +93,8 @@ Future<void> _scheduleSnooze(ReminderPayload payload) async {
 
     tzdata.initializeTimeZones();
     try {
-      tz.setLocalLocation(tz.getLocation(await FlutterTimezone.getLocalTimezone()));
+      tz.setLocalLocation(
+          tz.getLocation(await FlutterTimezone.getLocalTimezone()));
     } catch (_) {
       // default tz.local (UTC) is acceptable for a relative +10 min snooze.
       tz.setLocalLocation(tz.UTC);

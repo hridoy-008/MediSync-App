@@ -7,6 +7,7 @@ import '../../../core/localization/locale_controller.dart';
 import '../../../core/utils/time_format.dart';
 import '../../../domain/entities/configs.dart';
 import '../../../domain/enums.dart';
+import 'meal_edit_sheet.dart';
 import 'reminder_settings_controller.dart';
 
 Future<int?> _pickMinutes(BuildContext context, int current) async {
@@ -82,18 +83,20 @@ class MealConfigPage extends GetView<ReminderSettingsController> {
                                   m.minutesFromMidnight,
                                   bangla: bangla)),
                             ),
-                            if (m.isCustom) ...[
-                              IconButton(
-                                icon: const Icon(Icons.edit_outlined, size: 20),
-                                onPressed: () =>
-                                    _showMealDialog(context, controller, meal: m),
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, size: 20),
+                              onPressed: () => showMealEditSheet(
+                                context: context,
+                                meal: m,
+                                onSave: controller.saveMeal,
                               ),
+                            ),
+                            if (m.isCustom)
                               IconButton(
                                 icon: Icon(Icons.delete_outline,
                                     size: 20, color: context.colors.danger),
                                 onPressed: () => _confirmDelete(context, m),
                               ),
-                            ],
                             Switch(
                               value: m.enabled,
                               onChanged: (v) =>
@@ -108,7 +111,8 @@ class MealConfigPage extends GetView<ReminderSettingsController> {
                             Row(
                               children: [
                                 Icon(Icons.alarm_outlined,
-                                    size: 16, color: context.colors.onSurfaceMuted),
+                                    size: 16,
+                                    color: context.colors.onSurfaceMuted),
                                 const SizedBox(width: 4),
                                 Text(
                                   l.preMealReminder,
@@ -117,9 +121,10 @@ class MealConfigPage extends GetView<ReminderSettingsController> {
                               ],
                             ),
                             DropdownButton<int>(
-                              value: [0, 5, 10, 15, 30].contains(m.preMealMinutes)
-                                  ? m.preMealMinutes
-                                  : 0,
+                              value:
+                                  [0, 5, 10, 15, 30].contains(m.preMealMinutes)
+                                      ? m.preMealMinutes
+                                      : 0,
                               isDense: true,
                               underline: const SizedBox(),
                               style: Theme.of(context)
@@ -321,8 +326,8 @@ class HydrationConfigPage extends GetView<ReminderSettingsController> {
                       label: l.waterStart,
                       minutes: cfg.startMinutes,
                       bangla: bangla,
-                      onPick: (m) =>
-                          controller.saveHydration(cfg.copyWith(startMinutes: m)),
+                      onPick: (m) => controller
+                          .saveHydration(cfg.copyWith(startMinutes: m)),
                     ),
                     _TimeRow(
                       label: l.waterEnd,

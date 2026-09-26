@@ -74,12 +74,13 @@ class _AuthPageState extends State<AuthPage> {
                   Text(
                     'Securely back up prescriptions, sync schedules across devices, and get real-time safety alerts.',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                      color:
+                          theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const Spacer(flex: 1),
-                  
+
                   if (!controller.isAvailable) ...[
                     DisclaimerBanner(
                       message: l.authOfflineNote,
@@ -122,7 +123,8 @@ class _AuthPageState extends State<AuthPage> {
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2.5,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.blue),
                             ),
                           )
                         : Row(
@@ -133,7 +135,8 @@ class _AuthPageState extends State<AuthPage> {
                                 height: 24,
                                 width: 24,
                                 errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(Icons.g_mobiledata, size: 24, color: Colors.blue),
+                                    const Icon(Icons.g_mobiledata,
+                                        size: 24, color: Colors.blue),
                               ),
                               const SizedBox(width: 12),
                               const Text(

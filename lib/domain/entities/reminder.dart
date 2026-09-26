@@ -44,9 +44,10 @@ class Reminder extends Equatable {
   final int? lowStockThreshold;
   final bool stockAlertEnabled;
 
-  bool get isLowStock => (stockAlertEnabled && stockCount != null && lowStockThreshold != null)
-      ? stockCount! <= lowStockThreshold!
-      : false;
+  bool get isLowStock =>
+      (stockAlertEnabled && stockCount != null && lowStockThreshold != null)
+          ? stockCount! <= lowStockThreshold!
+          : false;
 
   Reminder copyWith({
     String? title,
@@ -196,8 +197,10 @@ class ReminderLog extends Equatable {
         confirmedAt: m['confirmedAt'] == null
             ? null
             : DateTime.parse(m['confirmedAt'] as String),
-        action: enumByName(ReminderAction.values, m['action'], ReminderAction.missed),
-        status: enumByName(ReminderStatus.values, m['status'], ReminderStatus.pending),
+        action: enumByName(
+            ReminderAction.values, m['action'], ReminderAction.missed),
+        status: enumByName(
+            ReminderStatus.values, m['status'], ReminderStatus.pending),
       );
 
   @override

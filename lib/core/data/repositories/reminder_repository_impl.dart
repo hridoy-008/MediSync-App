@@ -107,7 +107,8 @@ class ReminderRepositoryImpl implements ReminderRepository {
       .toList();
 
   @override
-  Future<Result<List<ReminderLog>>> getLogs({DateTime? from, DateTime? to}) async {
+  Future<Result<List<ReminderLog>>> getLogs(
+      {DateTime? from, DateTime? to}) async {
     try {
       var logs = _allLogs();
       if (from != null) {

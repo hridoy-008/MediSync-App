@@ -29,7 +29,9 @@ class ProfilePage extends GetView<ProfileController> {
                 child: Row(
                   children: [
                     Icon(
-                      signedIn ? Icons.cloud_done_outlined : Icons.cloud_off_outlined,
+                      signedIn
+                          ? Icons.cloud_done_outlined
+                          : Icons.cloud_off_outlined,
                       color: signedIn
                           ? context.colors.success
                           : context.colors.onSurfaceMuted,
@@ -109,7 +111,8 @@ class ProfilePage extends GetView<ProfileController> {
 
             // Voice Alerts
             SectionHeader(
-              title: controller.locale.isBangla ? 'কণ্ঠ সতর্কতা' : 'Voice Alerts',
+              title:
+                  controller.locale.isBangla ? 'কণ্ঠ সতর্কতা' : 'Voice Alerts',
               padding: EdgeInsets.zero,
             ),
             const SizedBox(height: AppSpacing.xs),
@@ -140,7 +143,9 @@ class ProfilePage extends GetView<ProfileController> {
                     if (enabled) ...[
                       const Divider(),
                       AppButton(
-                        label: controller.locale.isBangla ? 'ভয়েস টেস্ট করুন' : 'Test Speech Engine',
+                        label: controller.locale.isBangla
+                            ? 'ভয়েস টেস্ট করুন'
+                            : 'Test Speech Engine',
                         icon: Icons.volume_up_outlined,
                         kind: AppButtonKind.secondary,
                         onPressed: controller.testVoiceReminder,
@@ -174,7 +179,9 @@ class ProfilePage extends GetView<ProfileController> {
 
             // Reports & Sharing
             SectionHeader(
-              title: controller.locale.isBangla ? 'রিপোর্ট এবং শেয়ারিং' : 'Reports & Sharing',
+              title: controller.locale.isBangla
+                  ? 'রিপোর্ট এবং শেয়ারিং'
+                  : 'Reports & Sharing',
               padding: EdgeInsets.zero,
             ),
             const SizedBox(height: AppSpacing.xs),
@@ -183,7 +190,8 @@ class ProfilePage extends GetView<ProfileController> {
                 children: [
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.picture_as_pdf_outlined, color: context.colors.primary),
+                    leading: Icon(Icons.picture_as_pdf_outlined,
+                        color: context.colors.primary),
                     title: Text(
                       controller.locale.isBangla
                           ? 'পিডিএফ রিপোর্ট তৈরি করুন'
@@ -223,8 +231,8 @@ class ProfilePage extends GetView<ProfileController> {
                         granted: controller
                                 .permissionStatus[AppPermission.exactAlarm] ??
                             false,
-                        onFix: () => controller
-                            .fixPermission(AppPermission.exactAlarm),
+                        onFix: () =>
+                            controller.fixPermission(AppPermission.exactAlarm),
                         grantedLabel: l.granted,
                         deniedLabel: l.denied,
                       ),
@@ -243,8 +251,8 @@ class ProfilePage extends GetView<ProfileController> {
                         granted: controller.permissionStatus[
                                 AppPermission.batteryOptimization] ??
                             false,
-                        onFix: () => controller.fixPermission(
-                            AppPermission.batteryOptimization),
+                        onFix: () => controller
+                            .fixPermission(AppPermission.batteryOptimization),
                         grantedLabel: l.granted,
                         deniedLabel: l.denied,
                       ),
@@ -314,8 +322,7 @@ class _PermRow extends StatelessWidget {
       ),
       title: Text(label),
       trailing: granted
-          ? Text(grantedLabel,
-              style: TextStyle(color: colors.success))
+          ? Text(grantedLabel, style: TextStyle(color: colors.success))
           : TextButton(onPressed: onFix, child: Text(deniedLabel)),
     );
   }

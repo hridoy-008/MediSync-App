@@ -7,7 +7,8 @@ class AppTypography {
   static const String banglaFamily = 'NotoSansBengali';
 
   /// Build a TextTheme for the given locale so Bangla gets correct font + height.
-  static TextTheme textTheme(Color onSurface, Color muted, {required bool bangla}) {
+  static TextTheme textTheme(Color onSurface, Color muted,
+      {required bool bangla}) {
     final family = bangla ? banglaFamily : englishFamily;
     final fallback = bangla ? [englishFamily] : [banglaFamily];
     final lh = bangla ? 1.45 : 1.30;

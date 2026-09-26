@@ -97,10 +97,12 @@ class FirebaseAuthRepository implements AuthRepository {
           }
         },
         codeSent: (verificationId, _) {
-          if (!completer.isCompleted) completer.complete(Success(verificationId));
+          if (!completer.isCompleted)
+            completer.complete(Success(verificationId));
         },
         codeAutoRetrievalTimeout: (verificationId) {
-          if (!completer.isCompleted) completer.complete(Success(verificationId));
+          if (!completer.isCompleted)
+            completer.complete(Success(verificationId));
         },
       );
     } catch (e) {

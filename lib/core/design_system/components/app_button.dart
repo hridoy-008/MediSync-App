@@ -43,7 +43,10 @@ class AppButton extends StatelessWidget {
                 Icon(icon, size: 20),
                 const SizedBox(width: AppSpacing.xs),
               ],
-              Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+              if (expand)
+                Flexible(child: Text(label, overflow: TextOverflow.ellipsis))
+              else
+                Text(label),
             ],
           );
 
@@ -64,7 +67,7 @@ class AppButton extends StatelessWidget {
           style: FilledButton.styleFrom(
             backgroundColor: colors.danger,
             foregroundColor: Colors.white,
-            minimumSize: const Size.fromHeight(AppSizing.minTapTarget),
+            minimumSize: const Size(0, AppSizing.minTapTarget),
           ),
           onPressed: disabled ? null : onPressed,
           child: child,

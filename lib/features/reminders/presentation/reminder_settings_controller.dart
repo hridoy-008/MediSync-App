@@ -51,7 +51,9 @@ class ReminderSettingsController extends GetxController {
 
   Future<void> toggleMeal(MealType type, bool enabled) async {
     final updated = meals
-        .map((m) => (!m.isCustom && m.mealType == type) ? m.copyWith(enabled: enabled) : m)
+        .map((m) => (!m.isCustom && m.mealType == type)
+            ? m.copyWith(enabled: enabled)
+            : m)
         .toList();
     meals.assignAll(updated);
     await _config.saveMeals(updated);
@@ -86,7 +88,8 @@ class ReminderSettingsController extends GetxController {
     await _service.applyHabitReminders();
   }
 
-  Future<void> addCustomMeal(String name, int minutesFromMidnight, {int preMealMinutes = 0}) async {
+  Future<void> addCustomMeal(String name, int minutesFromMidnight,
+      {int preMealMinutes = 0}) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) return;
     final newMeal = MealConfig(
@@ -105,7 +108,9 @@ class ReminderSettingsController extends GetxController {
     await _service.applyHabitReminders();
   }
 
-  Future<void> editCustomMeal(String id, String newName, int minutesFromMidnight, {int? preMealMinutes}) async {
+  Future<void> editCustomMeal(
+      String id, String newName, int minutesFromMidnight,
+      {int? preMealMinutes}) async {
     final trimmed = newName.trim();
     if (trimmed.isEmpty) return;
     final updated = meals.map((m) {
@@ -118,6 +123,16 @@ class ReminderSettingsController extends GetxController {
       }
       return m;
     }).toList()
+      ..sort((a, b) => a.minutesFromMidnight.compareTo(b.minutesFromMidnight));
+    meals.assignAll(updated);
+    await _config.saveMeals(updated);
+    await _service.applyHabitReminders();
+  }
+
+  Future<void> saveMeal(MealConfig updatedMeal) async {
+    final updated = meals
+        .map((m) => m.id == updatedMeal.id ? updatedMeal : m)
+        .toList()
       ..sort((a, b) => a.minutesFromMidnight.compareTo(b.minutesFromMidnight));
     meals.assignAll(updated);
     await _config.saveMeals(updated);

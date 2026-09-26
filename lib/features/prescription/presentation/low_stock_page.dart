@@ -5,7 +5,6 @@ import '../../../core/design_system/design_system.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/utils/bangla_numerals.dart';
-import '../../../domain/entities/reminder.dart';
 import 'prescription_list_controller.dart';
 
 class LowStockPage extends GetView<PrescriptionListController> {
@@ -71,10 +70,12 @@ class LowStockPage extends GetView<PrescriptionListController> {
 
                 final stockLabel = isZero
                     ? l.outOfStock
-                    : l.stockLeft(
-                        isBangla ? BanglaNumerals.toBangla(stock) : stock.toString());
-                final thresholdLabel = l.alertThreshold(
-                    isBangla ? BanglaNumerals.toBangla(threshold) : threshold.toString());
+                    : l.stockLeft(isBangla
+                        ? BanglaNumerals.toBangla(stock)
+                        : stock.toString());
+                final thresholdLabel = l.alertThreshold(isBangla
+                    ? BanglaNumerals.toBangla(threshold)
+                    : threshold.toString());
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -102,7 +103,10 @@ class LowStockPage extends GetView<PrescriptionListController> {
                             children: [
                               Text(
                                 item.title,
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
                                       fontWeight: FontWeight.bold,
                                     ),
                               ),
@@ -110,7 +114,10 @@ class LowStockPage extends GetView<PrescriptionListController> {
                                 const SizedBox(height: 2),
                                 Text(
                                   item.subtitle,
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
                                         color: context.colors.onSurfaceMuted,
                                       ),
                                 ),
@@ -128,12 +135,17 @@ class LowStockPage extends GetView<PrescriptionListController> {
                                     decoration: BoxDecoration(
                                       color: isZero
                                           ? context.colors.danger
-                                          : context.colors.danger.withOpacity(0.15),
-                                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                                          : context.colors.danger
+                                              .withOpacity(0.15),
+                                      borderRadius:
+                                          BorderRadius.circular(AppRadius.sm),
                                     ),
                                     child: Text(
                                       stockLabel,
-                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
                                             color: isZero
                                                 ? Colors.white
                                                 : context.colors.danger,
@@ -148,12 +160,17 @@ class LowStockPage extends GetView<PrescriptionListController> {
                                     ),
                                     decoration: BoxDecoration(
                                       color: context.colors.surfaceVariant,
-                                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                                      borderRadius:
+                                          BorderRadius.circular(AppRadius.sm),
                                     ),
                                     child: Text(
                                       thresholdLabel,
-                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                            color: context.colors.onSurfaceMuted,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            color:
+                                                context.colors.onSurfaceMuted,
                                           ),
                                     ),
                                   ),

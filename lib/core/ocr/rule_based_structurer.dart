@@ -32,7 +32,8 @@ class RuleBasedStructurer implements PrescriptionStructurer {
       caseSensitive: false);
 
   // Dosing patterns: 1+0+1, 1-0-1, 1 0 1
-  static final _tripleDose = RegExp(r'([\d০-৯])\s*[+\-x ]\s*([\d০-৯])\s*[+\-x ]\s*([\d০-৯])');
+  static final _tripleDose =
+      RegExp(r'([\d০-৯])\s*[+\-x ]\s*([\d০-৯])\s*[+\-x ]\s*([\d০-৯])');
   static final _testHint = RegExp(
       r'\b(cbc|x-?ray|usg|ultrasound|ecg|mri|ct|test|fbs|2hbs|hba1c|lipid|urine|s\.?creatinine)\b',
       caseSensitive: false);
@@ -72,25 +73,31 @@ class RuleBasedStructurer implements PrescriptionStructurer {
     for (int i = 0; i < lines.length; i++) {
       final current = lines[i];
       final normalized = BanglaNumerals.toWestern(current);
-      
-      final isTripleDoseOnly = _tripleDose.hasMatch(normalized) && 
-          !RegExp(r'[a-zA-Z\u0980-\u09FF]{5,}').hasMatch(
-              normalized.replaceAll(RegExp(r'\b(tab|cap|syp|inj|before|after|food|meal)\b', caseSensitive: false), '')
-          );
 
-      final isDoseOnlyOrInstruction = RegExp(r'^[\d\s+\-x•·/]+$').hasMatch(normalized) ||
-          (RegExp(r'^\d').hasMatch(normalized) && 
-           !RegExp(r'\b[a-zA-Z\u0980-\u09FF]{5,}\b').hasMatch(
-             normalized.toLowerCase()
-               .replaceAll(RegExp(r'\b(tablet|capsule|spoon|after|before|food|meal|water|daily|times|খাবার|আগে|পরে|খালি|পেটে|টি|চামচ|একবার|দুইবার|তিনবার)\b'), '')
-           ));
+      final isTripleDoseOnly = _tripleDose.hasMatch(normalized) &&
+          !RegExp(r'[a-zA-Z\u0980-\u09FF]{5,}').hasMatch(normalized.replaceAll(
+              RegExp(r'\b(tab|cap|syp|inj|before|after|food|meal)\b',
+                  caseSensitive: false),
+              ''));
 
-      if ((isTripleDoseOnly || isDoseOnlyOrInstruction) && consolidatedLines.isNotEmpty) {
+      final isDoseOnlyOrInstruction = RegExp(r'^[\d\s+\-x•·/]+$')
+              .hasMatch(normalized) ||
+          (RegExp(r'^\d').hasMatch(normalized) &&
+              !RegExp(r'\b[a-zA-Z\u0980-\u09FF]{5,}\b').hasMatch(normalized
+                  .toLowerCase()
+                  .replaceAll(
+                      RegExp(
+                          r'\b(tablet|capsule|spoon|after|before|food|meal|water|daily|times|খাবার|আগে|পরে|খালি|পেটে|টি|চামচ|একবার|দুইবার|তিনবার)\b'),
+                      '')));
+
+      if ((isTripleDoseOnly || isDoseOnlyOrInstruction) &&
+          consolidatedLines.isNotEmpty) {
         final prevNormalized = BanglaNumerals.toWestern(consolidatedLines.last);
         if (!_testHint.hasMatch(prevNormalized)) {
           final hasTripleDoseAlready = _tripleDose.hasMatch(prevNormalized);
           if (!isTripleDoseOnly || !hasTripleDoseAlready) {
-            consolidatedLines[consolidatedLines.length - 1] = '${consolidatedLines.last} $current';
+            consolidatedLines[consolidatedLines.length - 1] =
+                '${consolidatedLines.last} $current';
             continue;
           }
         }
@@ -151,7 +158,10 @@ class RuleBasedStructurer implements PrescriptionStructurer {
     final dose = BanglaNumerals.toWestern(doseOriginal);
 
     if (doseOriginal.isNotEmpty) {
-      name = name.replaceAll(RegExp(RegExp.escape(doseOriginal), caseSensitive: false), '').trim();
+      name = name
+          .replaceAll(
+              RegExp(RegExp.escape(doseOriginal), caseSensitive: false), '')
+          .trim();
     }
     name = name.replaceAll(RegExp(r'[-•·]+$'), '').trim();
 
@@ -176,7 +186,8 @@ class RuleBasedStructurer implements PrescriptionStructurer {
               ? FieldConfidence.high
               : FieldConfidence.medium;
     }
-    confidence['dose'] = dose.isEmpty ? FieldConfidence.low : FieldConfidence.high;
+    confidence['dose'] =
+        dose.isEmpty ? FieldConfidence.low : FieldConfidence.high;
 
     // Frequency from triple-dose (sum of the three slots) or explicit codes.
     var frequency = 1;
@@ -196,8 +207,9 @@ class RuleBasedStructurer implements PrescriptionStructurer {
     }
 
     final timing = _timingFrom(original, normalized);
-    confidence['timing'] =
-        timing == FoodTiming.anyTime ? FieldConfidence.low : FieldConfidence.medium;
+    confidence['timing'] = timing == FoodTiming.anyTime
+        ? FieldConfidence.low
+        : FieldConfidence.medium;
 
     return Medicine(
       id: _uuid.v4(),

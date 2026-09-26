@@ -140,8 +140,9 @@ class _LangTile extends StatelessWidget {
       child: Row(
         children: [
           Icon(selected ? Icons.radio_button_checked : Icons.radio_button_off,
-              color:
-                  selected ? context.colors.primary : context.colors.onSurfaceMuted),
+              color: selected
+                  ? context.colors.primary
+                  : context.colors.onSurfaceMuted),
           const SizedBox(width: AppSpacing.md),
           Text(label, style: Theme.of(context).textTheme.titleMedium),
         ],

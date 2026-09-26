@@ -23,12 +23,32 @@ class TimeFormat {
     final month = dt.month;
     final day = dt.day;
     final monthsEn = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     final monthsBn = [
-      'জানু', 'ফেব্রু', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
-      'জুলাই', 'আগস্ট', 'সেপ্টে', 'অক্টো', 'নভে', 'ডিসে'
+      'জানু',
+      'ফেব্রু',
+      'মার্চ',
+      'এপ্রিল',
+      'মে',
+      'জুন',
+      'জুলাই',
+      'আগস্ট',
+      'সেপ্টে',
+      'অক্টো',
+      'নভে',
+      'ডিসে'
     ];
     final mStr = isBangla ? monthsBn[month - 1] : monthsEn[month - 1];
     if (isBangla) {

@@ -54,7 +54,11 @@ class BmiPlanController extends GetxController {
       if (p.sex != null) sex.value = p.sex!;
       if (p.activityLevel != null) activity.value = p.activityLevel!;
       if (p.bmi != null && p.bmiCategory != null) {
-        final bmr = (p.heightCm != null && p.weightKg != null && p.age != null && p.sex != null && p.activityLevel != null)
+        final bmr = (p.heightCm != null &&
+                p.weightKg != null &&
+                p.age != null &&
+                p.sex != null &&
+                p.activityLevel != null)
             ? _calc.compute(
                 heightCm: p.heightCm!,
                 weightKg: p.weightKg!,
@@ -86,7 +90,8 @@ class BmiPlanController extends GetxController {
     final rawExercise = LocalStore.instance.singletons.get('exercise_plan');
     if (rawExercise != null) {
       try {
-        exercise.value = ExercisePlan.fromMap(LocalStore.normalize(rawExercise));
+        exercise.value =
+            ExercisePlan.fromMap(LocalStore.normalize(rawExercise));
       } catch (_) {}
     }
   }
@@ -126,10 +131,12 @@ class BmiPlanController extends GetxController {
       imagePath: existingExercise?.imagePath,
     );
     exercise.value = finalExercise;
-    await LocalStore.instance.singletons.put('exercise_plan', finalExercise.toMap());
+    await LocalStore.instance.singletons
+        .put('exercise_plan', finalExercise.toMap());
 
     // Cache BMI on the profile.
-    final p = (await _profiles.get()).valueOrNull ?? const UserProfile(id: 'me');
+    final p =
+        (await _profiles.get()).valueOrNull ?? const UserProfile(id: 'me');
     await _profiles.save(p.copyWith(
       heightCm: height.value,
       weightKg: weight.value,

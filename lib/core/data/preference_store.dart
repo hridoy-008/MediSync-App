@@ -19,12 +19,10 @@ class PreferenceStore {
   Future<void> setThemeMode(String mode) => _prefs.setString(_kTheme, mode);
 
   bool get onboardingComplete => _prefs.getBool(_kOnboarded) ?? false;
-  Future<void> setOnboardingComplete(bool v) =>
-      _prefs.setBool(_kOnboarded, v);
+  Future<void> setOnboardingComplete(bool v) => _prefs.setBool(_kOnboarded, v);
 
   bool get consentCloudOcr => _prefs.getBool(_kConsentCloud) ?? false;
-  Future<void> setConsentCloudOcr(bool v) =>
-      _prefs.setBool(_kConsentCloud, v);
+  Future<void> setConsentCloudOcr(bool v) => _prefs.setBool(_kConsentCloud, v);
 
   bool get voiceRemindersEnabled => _prefs.getBool(_kVoiceReminders) ?? false;
   Future<void> setVoiceRemindersEnabled(bool v) =>
