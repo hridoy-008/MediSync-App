@@ -1,16 +1,1 @@
-{
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  },
-  "storage": {
-    "rules": "storage.rules"
-  },
-  "functions": [
-    {
-      "source": "functions",
-      "codebase": "default",
-      "runtime": "nodejs20"
-    }
-  ]
-}
+{"firestore":{"rules":"firestore.rules","indexes":"firestore.indexes.json"},"storage":{"rules":"storage.rules"},"functions":[{"source":"functions","codebase":"default","runtime":"nodejs20"}],"flutter":{"platforms":{"android":{"default":{"projectId":"medisync-70374","appId":"1:944415055732:android:c47c2d6e8783c4e67d5621","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"medisync-70374","configurations":{"android":"1:944415055732:android:c47c2d6e8783c4e67d5621"}}}}}}
