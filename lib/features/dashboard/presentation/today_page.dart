@@ -417,15 +417,21 @@ class _WaterTrackerCard extends GetView<DashboardController> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(Icons.water_drop,
-                        color: context.colors.primary, size: 22),
-                    const SizedBox(width: AppSpacing.xs),
-                    Text(l.waterTracker,
-                        style: Theme.of(context).textTheme.titleMedium),
-                  ],
+                Flexible(
+                  child: Row(
+                    children: [
+                      Icon(Icons.water_drop,
+                          color: context.colors.primary, size: 22),
+                      const SizedBox(width: AppSpacing.xs),
+                      Flexible(
+                        child: Text(l.waterTracker,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleMedium),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: AppSpacing.xs),
                 Text(
                   '$consumed / $target ${l.glasses}',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -452,26 +458,36 @@ class _WaterTrackerCard extends GetView<DashboardController> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 if (isComplete)
-                  Row(
-                    children: [
-                      Icon(Icons.check_circle,
-                          color: context.colors.success, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        l.goalReached,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: context.colors.success,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                    ],
+                  Flexible(
+                    child: Row(
+                      children: [
+                        Icon(Icons.check_circle,
+                            color: context.colors.success, size: 16),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            l.goalReached,
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: context.colors.success,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                          ),
+                        ),
+                      ],
+                    ),
                   )
                 else
-                  Text(
-                    l.remainingGlasses(remaining),
-                    style: Theme.of(context).textTheme.bodySmall,
+                  Flexible(
+                    child: Text(
+                      l.remainingGlasses(remaining),
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
                       icon: const Icon(Icons.remove_circle_outline, size: 20),

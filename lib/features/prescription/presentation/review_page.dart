@@ -248,9 +248,7 @@ class _MedicineEditorState extends State<_MedicineEditor> {
           ),
           const SizedBox(height: AppSpacing.xs),
           EditableFieldCard(
-            label: _bangla
-                ? 'ডোজ প্যাটার্ন (সকাল + দুপুর + রাত)'
-                : 'Dosage pattern (breakfast + lunch + dinner)',
+            label: _bangla ? 'ডোজ প্যাটার্ন' : 'Dosage pattern',
             controller: _pattern,
             confidence: _conf('dosePattern'),
             verifyLabel: l.pleaseVerify,

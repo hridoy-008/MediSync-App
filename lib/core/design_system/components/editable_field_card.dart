@@ -72,8 +72,12 @@ class EditableFieldCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(label, style: Theme.of(context).textTheme.labelSmall),
-            const Spacer(),
+            Expanded(
+              child: Text(label,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall),
+            ),
+            const SizedBox(width: 8),
             ConfidenceFlag(confidence: confidence, label: verifyLabel),
           ],
         ),
