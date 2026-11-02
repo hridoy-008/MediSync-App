@@ -193,24 +193,36 @@ class SleepConfig extends Equatable {
     this.wakeMinutes = 7 * 60,
     this.windDownMins = 30,
     this.enabled = true,
+    this.quizAlarmEnabled = true,
+    this.alarmSoundEnabled = true,
+    this.alarmVibrate = true,
   });
 
   final int bedtimeMinutes;
   final int wakeMinutes;
   final int windDownMins;
   final bool enabled;
+  final bool quizAlarmEnabled;
+  final bool alarmSoundEnabled;
+  final bool alarmVibrate;
 
   SleepConfig copyWith({
     int? bedtimeMinutes,
     int? wakeMinutes,
     int? windDownMins,
     bool? enabled,
+    bool? quizAlarmEnabled,
+    bool? alarmSoundEnabled,
+    bool? alarmVibrate,
   }) {
     return SleepConfig(
       bedtimeMinutes: bedtimeMinutes ?? this.bedtimeMinutes,
       wakeMinutes: wakeMinutes ?? this.wakeMinutes,
       windDownMins: windDownMins ?? this.windDownMins,
       enabled: enabled ?? this.enabled,
+      quizAlarmEnabled: quizAlarmEnabled ?? this.quizAlarmEnabled,
+      alarmSoundEnabled: alarmSoundEnabled ?? this.alarmSoundEnabled,
+      alarmVibrate: alarmVibrate ?? this.alarmVibrate,
     );
   }
 
@@ -219,6 +231,9 @@ class SleepConfig extends Equatable {
         'wakeMinutes': wakeMinutes,
         'windDownMins': windDownMins,
         'enabled': enabled,
+        'quizAlarmEnabled': quizAlarmEnabled,
+        'alarmSoundEnabled': alarmSoundEnabled,
+        'alarmVibrate': alarmVibrate,
       };
 
   factory SleepConfig.fromMap(Map<String, dynamic> m) => SleepConfig(
@@ -226,9 +241,19 @@ class SleepConfig extends Equatable {
         wakeMinutes: (m['wakeMinutes'] as num?)?.toInt() ?? 7 * 60,
         windDownMins: (m['windDownMins'] as num?)?.toInt() ?? 30,
         enabled: m['enabled'] as bool? ?? true,
+        quizAlarmEnabled: m['quizAlarmEnabled'] as bool? ?? true,
+        alarmSoundEnabled: m['alarmSoundEnabled'] as bool? ?? true,
+        alarmVibrate: m['alarmVibrate'] as bool? ?? true,
       );
 
   @override
-  List<Object?> get props =>
-      [bedtimeMinutes, wakeMinutes, windDownMins, enabled];
+  List<Object?> get props => [
+        bedtimeMinutes,
+        wakeMinutes,
+        windDownMins,
+        enabled,
+        quizAlarmEnabled,
+        alarmSoundEnabled,
+        alarmVibrate,
+      ];
 }

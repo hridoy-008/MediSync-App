@@ -32,6 +32,23 @@ class VoiceSynthesizer {
     }
   }
 
+  /// Speaks [text] verbatim (no medication phrasing).
+  static Future<void> speakText(String text, {required bool isBangla}) async {
+    try {
+      await _tts.setLanguage(isBangla ? 'bn-BD' : 'en-US');
+      await _tts.setSpeechRate(0.5);
+      await _tts.speak(text);
+    } catch (e) {
+      print('[VoiceSynthesizer] TTS error: $e');
+    }
+  }
+
+  static Future<void> stop() async {
+    try {
+      await _tts.stop();
+    } catch (_) {}
+  }
+
   static String _getSpeechText({
     required String title,
     required String subtitle,

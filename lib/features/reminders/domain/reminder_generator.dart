@@ -134,11 +134,16 @@ class ReminderGenerator {
           (m.isCustom && m.customName != null && m.customName!.isNotEmpty)
               ? m.customName!
               : _mealTitle(m.mealType);
+      final subtitle =
+          (m.recommendedFood != null && m.recommendedFood!.isNotEmpty)
+              ? m.recommendedFood!
+              : "It's time for your $title.";
 
       out.add(Reminder(
         id: 'rem_meal_${m.id}',
         type: ReminderType.meal,
         title: title,
+        subtitle: subtitle,
         refId: m.id,
         mealType: m.mealType,
         recurrence: RecurrenceRule(

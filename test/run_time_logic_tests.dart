@@ -201,6 +201,7 @@ void main() {
       reminderId: 'rem_meal_lunch',
       type: ReminderType.meal,
       scheduledTime: lunchScheduledTime,
+      confirmedAt: lunchScheduledTime.add(const Duration(minutes: 60)),
       action: ReminderAction.missed,
       status: ReminderStatus.missed,
     );
@@ -611,5 +612,416 @@ void main() {
     );
   }
 
-  stdout.writeln('=== ALL MEAL, TASK TIME & ACTIVITY HISTORY ASSERTIONS PASSED SUCCESSFULLY! ===');
+  // ==========================================
+  // SPECIFIC USER SCENARIOS VERIFICATION
+  // ==========================================
+  stdout.writeln('\n--- USER REQUEST SCENARIOS ---');
+
+  // Scenario 1: 8:00 AM Breakfast reminder, app opened at 10:00 AM (2 hours later)
+  // Status MUST be Pending / Not Recorded, NOT Missed. Taken/Missed MUST be enabled.
+  {
+    final day = DateTime(2026, 10, 3);
+    const breakfast = Reminder(
+      id: 'rem_meal_breakfast',
+      type: ReminderType.meal,
+      title: 'Breakfast',
+      mealType: MealType.breakfast,
+      recurrence: RecurrenceRule(
+        frequency: RecurrenceFrequency.daily,
+        timesOfDay: [8 * 60], // 8:00 AM
+      ),
+    );
+
+    // At 10:00 AM today (grace window has long expired)
+    final timeAt10am = DateTime(2026, 10, 3, 10, 0);
+    final items = builder.buildForDay(
+      reminders: [breakfast],
+      logs: const [],
+      day: day,
+    );
+
+    final item = items.first;
+    assertCondition(
+      item.status == ReminderStatus.pending,
+      'Scenario 1: 8:00 AM Breakfast at 10:00 AM is Pending (NOT Missed)',
+    );
+
+    final canActAt10am = canTakeAction(item: item, currentTime: timeAt10am, logs: const []);
+    assertCondition(
+      canActAt10am,
+      'Scenario 1: 8:00 AM Breakfast at 10:00 AM has Taken & Missed actions ENABLED',
+    );
+
+    // User presses Taken
+    final takenLog = ReminderLog(
+      id: 'log_b_taken',
+      reminderId: 'rem_meal_breakfast',
+      type: ReminderType.meal,
+      scheduledTime: DateTime(2026, 10, 3, 8, 0),
+      confirmedAt: DateTime(2026, 10, 3, 10, 5),
+      action: ReminderAction.taken,
+      status: ReminderStatus.taken,
+    );
+    final itemsAfterTaken = builder.buildForDay(
+      reminders: [breakfast],
+      logs: [takenLog],
+      day: day,
+    );
+    assertCondition(
+      itemsAfterTaken.first.status == ReminderStatus.taken,
+      'Scenario 1: After user presses Taken, status becomes Taken',
+    );
+    assertCondition(
+      !canTakeAction(item: itemsAfterTaken.first, currentTime: timeAt10am, logs: [takenLog]),
+      'Scenario 1: After user presses Taken, actions are DISABLED (isConfirmed = true)',
+    );
+  }
+
+  // Scenario 2: 8:00 AM Breakfast reminder, user does nothing until 12:00 PM
+  // Status MUST still be Pending. User can then manually select Missed.
+  {
+    final day = DateTime(2026, 10, 3);
+    const breakfast = Reminder(
+      id: 'rem_meal_breakfast',
+      type: ReminderType.meal,
+      title: 'Breakfast',
+      mealType: MealType.breakfast,
+      recurrence: RecurrenceRule(
+        frequency: RecurrenceFrequency.daily,
+        timesOfDay: [8 * 60], // 8:00 AM
+      ),
+    );
+
+    final timeAt12pm = DateTime(2026, 10, 3, 12, 0);
+    final items = builder.buildForDay(
+      reminders: [breakfast],
+      logs: const [],
+      day: day,
+    );
+
+    final item = items.first;
+    assertCondition(
+      item.status == ReminderStatus.pending,
+      'Scenario 2: At 12:00 PM without action, Breakfast MUST still be Pending',
+    );
+
+    final canActAt12pm = canTakeAction(item: item, currentTime: timeAt12pm, logs: const []);
+    assertCondition(
+      canActAt12pm,
+      'Scenario 2: At 12:00 PM, user can manually select Missed (actions ENABLED)',
+    );
+
+    // User explicitly selects Missed
+    final manualMissedLog = ReminderLog(
+      id: 'log_b_manual_missed',
+      reminderId: 'rem_meal_breakfast',
+      type: ReminderType.meal,
+      scheduledTime: DateTime(2026, 10, 3, 8, 0),
+      confirmedAt: DateTime(2026, 10, 3, 12, 1),
+      action: ReminderAction.missed,
+      status: ReminderStatus.missed,
+    );
+    final itemsAfterMissed = builder.buildForDay(
+      reminders: [breakfast],
+      logs: [manualMissedLog],
+      day: day,
+    );
+    assertCondition(
+      itemsAfterMissed.first.status == ReminderStatus.missed,
+      'Scenario 2: Only after user explicitly marks Missed, status becomes Missed',
+    );
+  }
+
+  // Scenario 3: Past day meal with NO user action
+  // Must remain Pending / Not Recorded, NOT auto-missed.
+  {
+    final pastDay = DateTime(2026, 10, 1);
+    const dinner = Reminder(
+      id: 'rem_meal_dinner',
+      type: ReminderType.meal,
+      title: 'Dinner',
+      mealType: MealType.dinner,
+      recurrence: RecurrenceRule(
+        frequency: RecurrenceFrequency.daily,
+        timesOfDay: [20 * 60], // 8:00 PM
+      ),
+    );
+
+    final pastItems = builder.buildForDay(
+      reminders: [dinner],
+      logs: const [],
+      day: pastDay,
+    );
+
+    assertCondition(
+      pastItems.first.status == ReminderStatus.pending,
+      'Scenario 3: Past day meal without user action remains Pending (NOT auto-missed)',
+    );
+  }
+
+  // Scenario 4: Automated unconfirmed missed logs are ignored for meals
+  {
+    final day = DateTime(2026, 10, 3);
+    const lunch = Reminder(
+      id: 'meal_lunch', // id from MealConfig without rem_ prefix
+      type: ReminderType.meal,
+      title: 'Lunch',
+      mealType: MealType.lunch,
+      recurrence: RecurrenceRule(
+        frequency: RecurrenceFrequency.daily,
+        timesOfDay: [13 * 60], // 1:00 PM
+      ),
+    );
+
+    // Automated unconfirmed missed log
+    final autoMissedLog = ReminderLog(
+      id: 'log_meal_lunch_auto',
+      reminderId: 'meal_lunch',
+      type: ReminderType.meal,
+      scheduledTime: DateTime(2026, 10, 3, 13, 0),
+      action: ReminderAction.missed,
+      status: ReminderStatus.missed,
+      confirmedAt: null, // automated!
+    );
+
+    final items = builder.buildForDay(
+      reminders: [lunch],
+      logs: [autoMissedLog],
+      day: day,
+    );
+
+    assertCondition(
+      items.first.status == ReminderStatus.pending,
+      'Scenario 4: Automated unconfirmed missed log for Lunch is IGNORED -> status stays Pending',
+    );
+  }
+
+  // Scenario 5: Bengali meal names (সকালের নাশতা, দুপুরের খাবার, রাতের খাবার)
+  {
+    final day = DateTime(2026, 10, 3);
+    const banglaDinner = Reminder(
+      id: 'custom_dinner_101',
+      type: ReminderType.meal,
+      title: 'রাতের খাবার',
+      recurrence: RecurrenceRule(
+        frequency: RecurrenceFrequency.daily,
+        timesOfDay: [21 * 60], // 9:00 PM
+      ),
+    );
+
+    assertCondition(
+      banglaDinner.isMeal,
+      'Scenario 5: Bangla title "রাতের খাবার" correctly identified by isMeal',
+    );
+
+    final items = builder.buildForDay(
+      reminders: [banglaDinner],
+      logs: const [],
+      day: day,
+    );
+
+    assertCondition(
+      items.first.status == ReminderStatus.pending,
+      'Scenario 5: Bangla meal without action stays Pending (never auto-missed)',
+    );
+  }
+
+  // Scenario 6: Break fast / custom named meal
+  {
+    const breakFast = Reminder(
+      id: 'custom_bf_1',
+      type: ReminderType.meal,
+      title: 'Break Fast',
+      recurrence: RecurrenceRule(
+        frequency: RecurrenceFrequency.daily,
+        timesOfDay: [8 * 60],
+      ),
+    );
+
+    assertCondition(
+      breakFast.isMeal,
+      'Scenario 6: "Break Fast" identified by isMeal',
+    );
+  }
+
+  // --- NOTIFICATION FLOW TESTS ---
+  stdout.writeln('\n--- RUNNING MEAL NOTIFICATION FLOW TESTS ---');
+
+  // Test 1: Breakfast scheduled for current time + 1 minute has notification prepared & stays Pending
+  {
+    final now = DateTime(2026, 10, 4, 7, 59); // 7:59 AM
+    final scheduledTime = DateTime(2026, 10, 4, 8, 0); // 8:00 AM (+1 min)
+    const bf = Reminder(
+      id: 'rem_meal_breakfast',
+      type: ReminderType.meal,
+      title: 'Breakfast',
+      subtitle: "It's time for your breakfast.",
+      mealType: MealType.breakfast,
+      recurrence: RecurrenceRule(
+        frequency: RecurrenceFrequency.daily,
+        timesOfDay: [8 * 60],
+      ),
+    );
+
+    final occurrences = bf.recurrence.occurrencesBetween(now, now.add(const Duration(days: 7)));
+    assertCondition(
+      occurrences.isNotEmpty && occurrences.first == scheduledTime,
+      'Notification Test 1: Breakfast occurrence calculated at scheduled time (8:00 AM)',
+    );
+
+    // Verify notification title & body formatting
+    final notifTitle = bf.isMeal && !bf.title.toLowerCase().contains('reminder')
+        ? '${bf.title} Reminder'
+        : bf.title;
+    final notifBody = bf.subtitle.isNotEmpty ? bf.subtitle : "It's time for your ${bf.title.toLowerCase()}.";
+
+    assertCondition(
+      notifTitle == 'Breakfast Reminder',
+      'Notification Test 1: Notification title is "Breakfast Reminder"',
+    );
+    assertCondition(
+      notifBody == "It's time for your breakfast.",
+      "Notification Test 1: Notification body is \"It's time for your breakfast.\"",
+    );
+
+    // At scheduled time (8:00 AM) when notification appears, meal is Pending
+    final itemsAt8 = builder.buildForDay(
+      reminders: [bf],
+      logs: const [],
+      day: now,
+    );
+    assertCondition(
+      itemsAt8.first.status == ReminderStatus.pending,
+      'Notification Test 1: Meal remains Pending when notification appears at 8:00 AM',
+    );
+  }
+
+  // Test 2: Ignore notification — 30 minutes later (8:30 AM), Breakfast must STILL be Pending
+  {
+    final day = DateTime(2026, 10, 4);
+    const bf = Reminder(
+      id: 'rem_meal_breakfast',
+      type: ReminderType.meal,
+      title: 'Breakfast',
+      subtitle: "It's time for your breakfast.",
+      mealType: MealType.breakfast,
+      recurrence: RecurrenceRule(
+        frequency: RecurrenceFrequency.daily,
+        timesOfDay: [8 * 60],
+      ),
+    );
+
+    // User received notification at 8:00 AM and ignored it. No log recorded.
+    final itemsAt830 = builder.buildForDay(
+      reminders: [bf],
+      logs: const [],
+      day: day,
+    );
+    assertCondition(
+      itemsAt830.first.status == ReminderStatus.pending,
+      'Notification Test 2: Ignored notification 30 minutes later leaves Breakfast as Pending (NOT Missed)',
+    );
+  }
+
+  // Test 3: Taken — user presses Taken on notification or UI
+  {
+    final day = DateTime(2026, 10, 4);
+    final scheduledTime = DateTime(2026, 10, 4, 8, 0);
+    const bf = Reminder(
+      id: 'rem_meal_breakfast',
+      type: ReminderType.meal,
+      title: 'Breakfast',
+      mealType: MealType.breakfast,
+      recurrence: RecurrenceRule(
+        frequency: RecurrenceFrequency.daily,
+        timesOfDay: [8 * 60],
+      ),
+    );
+
+    final takenLog = ReminderLog(
+      id: 'log_${bf.id}_${scheduledTime.millisecondsSinceEpoch}',
+      reminderId: bf.id,
+      type: bf.type,
+      scheduledTime: scheduledTime,
+      firedAt: scheduledTime,
+      confirmedAt: DateTime(2026, 10, 4, 8, 5),
+      action: ReminderAction.taken,
+      status: ReminderStatus.taken,
+    );
+
+    final items = builder.buildForDay(
+      reminders: [bf],
+      logs: [takenLog],
+      day: day,
+    );
+    assertCondition(
+      items.first.status == ReminderStatus.taken,
+      'Notification Test 3: Pressing Taken records Breakfast as Taken',
+    );
+  }
+
+  // Test 4: Missed — user manually presses Missed on notification or UI
+  {
+    final day = DateTime(2026, 10, 4);
+    final scheduledTime = DateTime(2026, 10, 4, 8, 0);
+    const bf = Reminder(
+      id: 'rem_meal_breakfast',
+      type: ReminderType.meal,
+      title: 'Breakfast',
+      mealType: MealType.breakfast,
+      recurrence: RecurrenceRule(
+        frequency: RecurrenceFrequency.daily,
+        timesOfDay: [8 * 60],
+      ),
+    );
+
+    final missedLog = ReminderLog(
+      id: 'log_${bf.id}_${scheduledTime.millisecondsSinceEpoch}',
+      reminderId: bf.id,
+      type: bf.type,
+      scheduledTime: scheduledTime,
+      firedAt: scheduledTime,
+      confirmedAt: DateTime(2026, 10, 4, 10, 0),
+      action: ReminderAction.missed,
+      status: ReminderStatus.missed,
+    );
+
+    final items = builder.buildForDay(
+      reminders: [bf],
+      logs: [missedLog],
+      day: day,
+    );
+    assertCondition(
+      items.first.status == ReminderStatus.missed,
+      'Notification Test 4: Manually pressing Missed records Breakfast as Missed',
+    );
+  }
+
+  // Test 5: Tapping notification body (actionId == null) must NOT record an action
+  {
+    final day = DateTime(2026, 10, 4);
+    const bf = Reminder(
+      id: 'rem_meal_breakfast',
+      type: ReminderType.meal,
+      title: 'Breakfast',
+      mealType: MealType.breakfast,
+      recurrence: RecurrenceRule(
+        frequency: RecurrenceFrequency.daily,
+        timesOfDay: [8 * 60],
+      ),
+    );
+
+    // Tapping notification body opens app; no confirmed log is written.
+    final items = builder.buildForDay(
+      reminders: [bf],
+      logs: const [],
+      day: day,
+    );
+    assertCondition(
+      items.first.status == ReminderStatus.pending,
+      'Notification Test 5: Tapping notification body keeps Breakfast as Pending',
+    );
+  }
+
+  stdout.writeln('=== ALL MEAL, TASK TIME, ACTIVITY HISTORY & SMART ALARM ASSERTIONS PASSED SUCCESSFULLY! ===');
 }

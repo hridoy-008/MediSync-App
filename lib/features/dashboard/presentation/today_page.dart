@@ -91,17 +91,61 @@ class _TodayPageState extends State<TodayPage> {
                       final graceEnd = item.scheduledTime.add(
                           Duration(minutes: item.reminder.graceWindowMins));
                       final isWindowPassed = now.isAfter(graceEnd);
-                      final isConfirmed = item.status == ReminderStatus.taken ||
-                          item.status == ReminderStatus.missed ||
-                          item.status == ReminderStatus.snoozed ||
-                          item.status == ReminderStatus.skipped ||
+                      final isMeal = item.reminder.isMeal ||
+                          item.type == ReminderType.meal ||
+                          item.mealConfig != null;
+
+                      // Check if the user has explicitly confirmed an action for this meal
+                      final hasUserConfirmedAction = controller.logs.any((l) {
+                        final lt = (l.confirmedAt ?? l.scheduledTime).toLocal();
+                        final st = item.scheduledTime.toLocal();
+                        return l.reminderId == item.reminder.id &&
+                            lt.year == st.year &&
+                            lt.month == st.month &&
+                            lt.day == st.day &&
+                            l.confirmedAt != null;
+                      });
+
+                      // For meal cards, the UI status must NEVER automatically display Missed
+                      // merely because the scheduled meal time has passed.
+                      // Only an explicit user action (e.g. pressing Taken or Missed) updates the visual status.
+                      // If the user has not recorded anything, display status is strictly Pending.
+                      ReminderStatus effectiveStatus = item.status;
+                      if (isMeal) {
+                        if (item.status == ReminderStatus.taken) {
+                          effectiveStatus = ReminderStatus.taken;
+                        } else if (item.status == ReminderStatus.missed &&
+                            hasUserConfirmedAction) {
+                          effectiveStatus = ReminderStatus.missed;
+                        } else if (item.status == ReminderStatus.snoozed ||
+                            item.status == ReminderStatus.skipped) {
+                          effectiveStatus = item.status;
+                        } else {
+                          effectiveStatus = ReminderStatus.pending;
+                        }
+                      }
+
+                      final isConfirmed = effectiveStatus == ReminderStatus.taken ||
+                          (effectiveStatus == ReminderStatus.missed &&
+                              (!isMeal || hasUserConfirmedAction)) ||
+                          effectiveStatus == ReminderStatus.snoozed ||
+                          effectiveStatus == ReminderStatus.skipped ||
                           controller.logs.any((l) {
-                            final lt = (l.confirmedAt ?? l.scheduledTime).toLocal();
+                            if (isMeal &&
+                                (l.status == ReminderStatus.missed ||
+                                    l.action == ReminderAction.missed) &&
+                                l.confirmedAt == null) {
+                              return false;
+                            }
+                            final lt =
+                                (l.confirmedAt ?? l.scheduledTime).toLocal();
                             final st = item.scheduledTime.toLocal();
                             return l.reminderId == item.reminder.id &&
                                 lt.year == st.year &&
                                 lt.month == st.month &&
-                                lt.day == st.day;
+                                lt.day == st.day &&
+                                (l.confirmedAt != null ||
+                                    l.status == ReminderStatus.taken);
                           });
                       final isDue = !now.isBefore(item.scheduledTime);
                       final canAct = isToday && isDue && !isConfirmed;
@@ -109,24 +153,28 @@ class _TodayPageState extends State<TodayPage> {
                       String? statusLabel;
                       Color? statusColor;
 
-                      if (item.status == ReminderStatus.pending) {
+                      if (effectiveStatus == ReminderStatus.pending) {
                         if (isDue) {
-                          statusLabel = bangla ? 'সময় হয়েছে' : 'Due';
+                          statusLabel = isMeal
+                              ? (bangla ? 'রেকর্ড করা হয়নি' : 'Pending')
+                              : (bangla ? 'সময় হয়েছে' : 'Due');
                           statusColor = colors.warning;
                         } else {
-                          statusLabel = bangla ? 'আসন্ন' : 'Upcoming';
+                          statusLabel = isMeal
+                              ? (bangla ? 'নির্ধারিত' : 'Scheduled')
+                              : (bangla ? 'আসন্ন' : 'Upcoming');
                           statusColor = colors.info;
                         }
-                      } else if (item.status == ReminderStatus.taken) {
+                      } else if (effectiveStatus == ReminderStatus.taken) {
                         statusLabel = l.taken;
                         statusColor = colors.success;
-                      } else if (item.status == ReminderStatus.missed) {
+                      } else if (effectiveStatus == ReminderStatus.missed) {
                         statusLabel = l.missed;
                         statusColor = colors.danger;
-                      } else if (item.status == ReminderStatus.snoozed) {
+                      } else if (effectiveStatus == ReminderStatus.snoozed) {
                         statusLabel = l.snooze;
                         statusColor = colors.warning;
-                      } else if (item.status == ReminderStatus.skipped) {
+                      } else if (effectiveStatus == ReminderStatus.skipped) {
                         statusLabel = l.skip;
                         statusColor = colors.onSurfaceMuted;
                       }
@@ -156,7 +204,7 @@ class _TodayPageState extends State<TodayPage> {
                             timeLabel: TimeFormat.fromDateTime(
                                 item.scheduledTime,
                                 bangla: bangla),
-                            status: item.status,
+                            status: effectiveStatus,
                             statusLabel: statusLabel,
                             statusColor: statusColor,
                             emphasized: emphasized,

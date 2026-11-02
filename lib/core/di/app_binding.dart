@@ -1,5 +1,7 @@
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 
+import '../../features/alarm/presentation/alarm_controller.dart';
 import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/bmi_plan/presentation/bmi_plan_controller.dart';
 import '../../features/dashboard/presentation/activity_history_controller.dart';
@@ -108,6 +110,14 @@ class AppBinding extends Bindings {
         locale: Get.find<LocaleController>(),
         permissions: Get.find<PermissionService>(),
         profileRepository: Get.find<ProfileRepository>(),
+      ),
+      fenix: true,
+    );
+
+    Get.lazyPut<AlarmController>(
+      () => AlarmController(
+        notificationPlugin: Get.find<FlutterLocalNotificationsPlugin>(),
+        reminderService: Get.find<ReminderService>(),
       ),
       fenix: true,
     );

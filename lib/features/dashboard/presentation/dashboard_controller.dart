@@ -120,9 +120,30 @@ class DashboardController extends GetxController {
     debugPrint('[HISTORY] QUERY START: $startOfSelectedDay');
     debugPrint('[HISTORY] QUERY END: $startOfNextDay');
 
+    // Purge any legacy unconfirmed auto-missed meal logs from storage BEFORE querying logs
+    if (LocalStore.instance.isReady) {
+      for (final raw in LocalStore.instance.logs.values.toList()) {
+        final map = LocalStore.normalize(raw);
+        final remId = (map['reminderId']?.toString() ?? '').toLowerCase();
+        final isMeal = remId.startsWith('rem_meal') ||
+            remId.startsWith('meal_') ||
+            remId.contains('meal') ||
+            map['type'] == 'meal';
+        final isMissed = map['status'] == 'missed' || map['action'] == 'missed';
+        final isUnconfirmed = map['confirmedAt'] == null;
+        if (isMeal && isMissed && isUnconfirmed) {
+          final id = map['id']?.toString();
+          if (id != null) {
+            await _reminders.deleteLog(id);
+          }
+        }
+      }
+    }
+
     final reminders = (await _reminders.getAll()).valueOrNull ?? const [];
     final allLogs = (await _reminders.getLogs()).valueOrNull ?? const [];
     final meals = (await _config.getMeals()).valueOrNull ?? const [];
+
     logs.assignAll(allLogs);
     debugPrint('[DATE HISTORY] Total Activity Records: ${allLogs.length}');
 

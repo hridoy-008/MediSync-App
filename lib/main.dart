@@ -16,9 +16,12 @@ import 'core/firebase/firebase_service.dart';
 import 'core/localization/l10n.dart';
 import 'core/localization/locale_controller.dart';
 import 'core/notifications/local_notification_scheduler.dart';
+import 'core/notifications/notification_channels.dart';
 import 'core/notifications/reminder_action_handler.dart';
 import 'core/notifications/reminder_maintenance.dart';
 import 'core/notifications/reminder_scheduler.dart';
+import 'core/permissions/permission_service.dart';
+import 'features/alarm/application/alarm_launcher.dart';
 import 'core/routing/app_pages.dart';
 import 'core/routing/app_routes.dart';
 import 'domain/entities/reminder.dart';
@@ -72,6 +75,14 @@ Future<void> main() async {
 
   // 6) Foreground notification taps refresh the Today view and announce voice if enabled.
   appForegroundActionCallback = (payload, actionId) {
+    if (payload.reminderId == LocalNotificationScheduler.wakeReminderId &&
+        (actionId == null ||
+            actionId == NotificationActions.open ||
+            actionId == NotificationActions.solveQuiz)) {
+      AlarmLauncher.openIfRinging(plugin, hint: payload);
+      return;
+    }
+
     if (payload.reminderId.startsWith('low_stock_')) {
       Get.toNamed(AppRoutes.lowStock);
       return;
@@ -103,6 +114,21 @@ Future<void> main() async {
     }
   };
 
+  // 6.5) Request notification and exact alarm permissions once on app startup if not yet requested.
+  if (!prefs.notificationPermissionRequested) {
+    if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS) {
+      final permService = Get.find<PermissionService>();
+      final status = await permService.currentStatus();
+      if (status[AppPermission.notifications] != true) {
+        await permService.requestNotifications();
+        if (Platform.isAndroid) {
+          await permService.requestExactAlarm();
+        }
+      }
+      await prefs.setNotificationPermissionRequested(true);
+    }
+  }
+
   // 7) Rebuild the OS schedule from the mirror + run a missed sweep on launch.
   await Get.find<ReminderService>().refreshSchedule();
 
@@ -110,6 +136,14 @@ Future<void> main() async {
       prefs.onboardingComplete ? AppRoutes.home : AppRoutes.onboarding;
 
   runApp(MediSyncApp(config: config, initialRoute: initialRoute));
+
+  // A ringing wake-up alarm (cold start via full-screen intent, or the app
+  // returning to the foreground) opens the alarm screen.
+  final alarmObserver = _AlarmLifecycleObserver(plugin);
+  WidgetsBinding.instance.addObserver(alarmObserver);
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (prefs.onboardingComplete) alarmObserver.check();
+  });
 }
 
 class MediSyncApp extends StatelessWidget {
@@ -142,5 +176,17 @@ class MediSyncApp extends StatelessWidget {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
       );
     });
+  }
+}
+
+class _AlarmLifecycleObserver with WidgetsBindingObserver {
+  _AlarmLifecycleObserver(this._plugin);
+  final FlutterLocalNotificationsPlugin _plugin;
+
+  void check() => AlarmLauncher.openIfRinging(_plugin);
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) check();
   }
 }

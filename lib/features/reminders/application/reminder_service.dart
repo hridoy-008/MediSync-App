@@ -53,6 +53,13 @@ class ReminderService {
 
   /// Regenerate the habit reminders (meal/water/sleep) from current configs.
   Future<void> applyHabitReminders() async {
+    await syncHabitReminders();
+    await refreshSchedule();
+  }
+
+  /// Synchronize habit reminders (meals, water, sleep) into the repository
+  /// from current configs so that the OS schedule and Hive mirror always contain them.
+  Future<void> syncHabitReminders() async {
     final meals = (await _config.getMeals()).valueOrNull ?? const [];
     final hydration =
         (await _config.getHydration()).valueOrNull ?? const HydrationConfig();
@@ -73,16 +80,20 @@ class ReminderService {
       await _repo.delete(id);
     }
     final existing = (await _repo.getAll()).valueOrNull ?? const [];
-    for (final r in existing.where((r) => r.type == ReminderType.meal)) {
+    for (final r in existing.where((r) => r.isMeal || r.type == ReminderType.meal)) {
       await _repo.delete(r.id);
     }
     await _repo.saveAll(generated);
-    await refreshSchedule();
   }
 
   /// Reconcile the OS scheduler with all enabled reminders (also tops up the
   /// iOS rolling window). Call on app open + after any edit.
   Future<void> refreshSchedule() async {
+    final existing = (await _repo.getAll()).valueOrNull ?? const [];
+    final hasMeals = existing.any((r) => r.isMeal || r.type == ReminderType.meal);
+    if (!hasMeals) {
+      await syncHabitReminders();
+    }
     final reminders = (await _repo.getEnabled()).valueOrNull ?? const [];
     await _scheduler.rescheduleAll(reminders);
   }

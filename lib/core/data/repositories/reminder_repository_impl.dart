@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../../../domain/entities/reminder.dart';
+import '../../../domain/enums.dart';
 import '../../../domain/repositories/reminder_repository.dart';
 import '../../firebase/remote_mirror.dart';
 import '../../utils/logger.dart';
@@ -104,6 +105,15 @@ class ReminderRepositoryImpl implements ReminderRepository {
 
   List<ReminderLog> _allLogs() => _store.logs.values
       .map((m) => ReminderLog.fromMap(LocalStore.normalize(m)))
+      .where((l) {
+        if (l.isMeal &&
+            (l.status == ReminderStatus.missed ||
+                l.action == ReminderAction.missed) &&
+            l.confirmedAt == null) {
+          return false;
+        }
+        return true;
+      })
       .toList();
 
   @override

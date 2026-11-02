@@ -14,4 +14,6 @@ abstract class AppRoutes {
   static const sleepConfig = '/reminders/sleep';
   static const medicineSchedule = '/reminders/medicines';
   static const activityHistory = '/history';
+  static const activeAlarm = '/alarm/active';
+  static const quiz = '/alarm/quiz';
 }

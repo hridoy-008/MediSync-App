@@ -20,12 +20,17 @@ class PermissionService {
   Future<bool> requestNotifications() async {
     final granted = await _android?.requestNotificationsPermission();
     if (granted == null) {
-      // iOS
+      // iOS / macOS
       final ios = await _notifications
           .resolvePlatformSpecificImplementation<
               IOSFlutterLocalNotificationsPlugin>()
           ?.requestPermissions(alert: true, badge: true, sound: true);
-      return ios ?? false;
+      if (ios != null) return ios;
+      final macos = await _notifications
+          .resolvePlatformSpecificImplementation<
+              MacOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(alert: true, badge: true, sound: true);
+      return macos ?? false;
     }
     return granted;
   }

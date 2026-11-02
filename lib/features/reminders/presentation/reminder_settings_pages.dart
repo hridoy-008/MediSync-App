@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -413,6 +414,60 @@ class SleepConfigPage extends GetView<ReminderSettingsController> {
                       max: 60,
                       onChanged: (v) =>
                           controller.saveSleep(cfg.copyWith(windDownMins: v)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      bangla ? 'ওয়েক-আপ অ্যালার্ম' : 'Wake-Up Alarm',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      bangla
+                          ? 'কুইজ সমাধান করলেই অ্যালার্ম বন্ধ হবে'
+                          : 'Rings until you solve a short quiz',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey,
+                          ),
+                    ),
+                    const Divider(height: AppSpacing.lg),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        bangla ? 'কুইজ অ্যালার্ম চালু' : 'Enable Quiz Alarm',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      value: cfg.quizAlarmEnabled,
+                      onChanged: (v) => controller
+                          .saveSleep(cfg.copyWith(quizAlarmEnabled: v)),
+                    ),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        bangla ? 'অ্যালার্মের শব্দ' : 'Alarm Sound',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      value: cfg.alarmSoundEnabled,
+                      onChanged: (v) => controller
+                          .saveSleep(cfg.copyWith(alarmSoundEnabled: v)),
+                    ),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        bangla ? 'কম্পন' : 'Vibrate',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      value: cfg.alarmVibrate,
+                      onChanged: (v) =>
+                          controller.saveSleep(cfg.copyWith(alarmVibrate: v)),
                     ),
                   ],
                 ),

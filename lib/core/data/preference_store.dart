@@ -27,4 +27,11 @@ class PreferenceStore {
   bool get voiceRemindersEnabled => _prefs.getBool(_kVoiceReminders) ?? false;
   Future<void> setVoiceRemindersEnabled(bool v) =>
       _prefs.setBool(_kVoiceReminders, v);
+
+  static const _kNotificationPermissionRequested =
+      'pref.notificationPermissionRequested';
+  bool get notificationPermissionRequested =>
+      _prefs.getBool(_kNotificationPermissionRequested) ?? false;
+  Future<void> setNotificationPermissionRequested(bool v) =>
+      _prefs.setBool(_kNotificationPermissionRequested, v);
 }

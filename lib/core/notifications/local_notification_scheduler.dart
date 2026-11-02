@@ -1,11 +1,15 @@
+import 'dart:typed_data';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:get/get.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../domain/entities/configs.dart';
 import '../../domain/entities/reminder.dart';
 import '../../domain/enums.dart';
+import '../data/local_store.dart';
 import '../localization/locale_controller.dart';
 import '../utils/bangla_numerals.dart';
 import '../utils/logger.dart';
@@ -27,6 +31,9 @@ class LocalNotificationScheduler implements ReminderScheduler {
   final FlutterLocalNotificationsPlugin _plugin;
   static const _log = AppLogger('Scheduler');
 
+  /// Id of the reminder that acts as the Wake-Up Alarm.
+  static const wakeReminderId = 'rem_sleep_wake';
+
   /// How far ahead to materialize occurrences.
   static const int windowDays = 7;
 
@@ -42,21 +49,30 @@ class LocalNotificationScheduler implements ReminderScheduler {
     tzdata.initializeTimeZones();
     try {
       final name = await FlutterTimezone.getLocalTimezone();
-      tz.setLocalLocation(tz.getLocation(name));
+      try {
+        tz.setLocalLocation(tz.getLocation(name));
+      } catch (_) {
+        final clean = name.replaceAll(' ', '_');
+        tz.setLocalLocation(tz.getLocation(clean));
+      }
     } catch (e) {
       _log.w('Timezone detect failed, defaulting to UTC: $e');
       tz.setLocalLocation(tz.UTC);
     }
 
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosInit = DarwinInitializationSettings(
+    const darwinInit = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
     );
 
     await _plugin.initialize(
-      const InitializationSettings(android: androidInit, iOS: iosInit),
+      const InitializationSettings(
+        android: androidInit,
+        iOS: darwinInit,
+        macOS: darwinInit,
+      ),
       onDidReceiveNotificationResponse: onForegroundNotificationResponse,
       onDidReceiveBackgroundNotificationResponse:
           onBackgroundNotificationResponse,
@@ -68,6 +84,8 @@ class LocalNotificationScheduler implements ReminderScheduler {
     for (final ch in NotificationChannels.all) {
       await android?.createNotificationChannel(ch);
     }
+    // Retire the old Smart Wake-Up Alarm channel on existing installs.
+    await android?.deleteNotificationChannel('smart_wakeup_alarm_channel');
 
     _inited = true;
   }
@@ -86,7 +104,7 @@ class LocalNotificationScheduler implements ReminderScheduler {
 
   @override
   Future<void> rescheduleAll(List<Reminder> reminders) async {
-    await cancelAll();
+    await _cancelAllExceptRingingAlarm();
     final now = DateTime.now();
     final until = now.add(const Duration(days: windowDays));
 
@@ -98,6 +116,7 @@ class LocalNotificationScheduler implements ReminderScheduler {
         pending.add((reminder: r, time: t));
       }
     }
+
     pending.sort((a, b) {
       final pa = a.reminder.type == ReminderType.medicine ? 0 : 1;
       final pb = b.reminder.type == ReminderType.medicine ? 0 : 1;
@@ -120,26 +139,57 @@ class LocalNotificationScheduler implements ReminderScheduler {
   }
 
   Future<void> _scheduleOne(Reminder reminder, DateTime fireTime) async {
-    if (fireTime.isBefore(DateTime.now())) return;
+    final nowTz = tz.TZDateTime.now(tz.local);
     final tzTime = tz.TZDateTime.from(fireTime, tz.local);
-    final channel = NotificationChannels.forType(reminder.type);
+    if (!tzTime.isAfter(nowTz)) return;
+
+    final wakeCfg = reminder.id == wakeReminderId ? await _readSleepConfig() : null;
+    final isQuizAlarm = wakeCfg != null && wakeCfg.quizAlarmEnabled;
+    final channel = isQuizAlarm
+        ? NotificationChannels.wakeAlarmFor(
+            sound: wakeCfg.alarmSoundEnabled,
+            vibrate: wakeCfg.alarmVibrate,
+          )
+        : NotificationChannels.forType(reminder.type);
+
     final payload = ReminderPayload(
       reminderId: reminder.id,
       type: reminder.type,
       scheduledTime: fireTime,
     ).encode();
 
+    final mealTitle = reminder.isMeal &&
+            !reminder.title.toLowerCase().contains('reminder') &&
+            !reminder.title.contains('রিমাইন্ডার')
+        ? '${reminder.title} Reminder'
+        : reminder.title;
+    final title = isQuizAlarm ? 'Wake Up!' : mealTitle;
+    final body = isQuizAlarm
+        ? 'Solve the quiz to stop the alarm'
+        : (reminder.subtitle.isNotEmpty
+            ? reminder.subtitle
+            : (reminder.isMeal
+                ? "It's time for your ${reminder.title.toLowerCase()}."
+                : null));
+
     final androidDetailsExact = AndroidNotificationDetails(
       channel.id,
       channel.name,
       channelDescription: channel.description,
       importance: channel.importance,
-      priority: Priority.high,
-      category: reminder.type == ReminderType.medicine
+      priority: isQuizAlarm ? Priority.max : Priority.high,
+      category: isQuizAlarm || reminder.type == ReminderType.medicine
           ? AndroidNotificationCategory.alarm
           : AndroidNotificationCategory.reminder,
-      fullScreenIntent: reminder.type == ReminderType.medicine,
-      actions: _actionsFor(reminder.type),
+      fullScreenIntent: isQuizAlarm || reminder.type == ReminderType.medicine,
+      ongoing: isQuizAlarm,
+      autoCancel: !isQuizAlarm,
+      audioAttributesUsage: isQuizAlarm
+          ? AudioAttributesUsage.alarm
+          : AudioAttributesUsage.notification,
+      // FLAG_INSISTENT: sound/vibration repeat until the notification is cancelled.
+      additionalFlags: isQuizAlarm ? Int32List.fromList(<int>[4]) : null,
+      actions: _actionsFor(reminder, isQuizAlarm),
     );
 
     final androidDetailsSafe = AndroidNotificationDetails(
@@ -147,15 +197,21 @@ class LocalNotificationScheduler implements ReminderScheduler {
       channel.name,
       channelDescription: channel.description,
       importance: channel.importance,
-      priority: Priority.high,
-      category: reminder.type == ReminderType.medicine
+      priority: isQuizAlarm ? Priority.max : Priority.high,
+      category: isQuizAlarm || reminder.type == ReminderType.medicine
           ? AndroidNotificationCategory.alarm
           : AndroidNotificationCategory.reminder,
       fullScreenIntent: false,
-      actions: _actionsFor(reminder.type),
+      ongoing: isQuizAlarm,
+      autoCancel: !isQuizAlarm,
+      audioAttributesUsage: isQuizAlarm
+          ? AudioAttributesUsage.alarm
+          : AudioAttributesUsage.notification,
+      additionalFlags: isQuizAlarm ? Int32List.fromList(<int>[4]) : null,
+      actions: _actionsFor(reminder, isQuizAlarm),
     );
 
-    const iosDetails = DarwinNotificationDetails(
+    const darwinDetails = DarwinNotificationDetails(
       interruptionLevel: InterruptionLevel.timeSensitive,
       categoryIdentifier: 'reminder_actions',
     );
@@ -163,10 +219,14 @@ class LocalNotificationScheduler implements ReminderScheduler {
     try {
       await _plugin.zonedSchedule(
         reminder.notificationIdFor(fireTime),
-        reminder.title,
-        reminder.subtitle.isEmpty ? null : reminder.subtitle,
+        title,
+        body,
         tzTime,
-        NotificationDetails(android: androidDetailsExact, iOS: iosDetails),
+        NotificationDetails(
+          android: androidDetailsExact,
+          iOS: darwinDetails,
+          macOS: darwinDetails,
+        ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
@@ -178,10 +238,14 @@ class LocalNotificationScheduler implements ReminderScheduler {
       try {
         await _plugin.zonedSchedule(
           reminder.notificationIdFor(fireTime),
-          reminder.title,
-          reminder.subtitle.isEmpty ? null : reminder.subtitle,
+          title,
+          body,
           tzTime,
-          NotificationDetails(android: androidDetailsSafe, iOS: iosDetails),
+          NotificationDetails(
+            android: androidDetailsSafe,
+            iOS: darwinDetails,
+            macOS: darwinDetails,
+          ),
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.absoluteTime,
@@ -193,10 +257,29 @@ class LocalNotificationScheduler implements ReminderScheduler {
     }
   }
 
-  List<AndroidNotificationAction> _actionsFor(ReminderType type) {
-    if (type == ReminderType.water || type == ReminderType.sleep) {
+  List<AndroidNotificationAction> _actionsFor(
+      Reminder reminder, bool isQuizAlarm) {
+    if (isQuizAlarm) {
+      return const [
+        AndroidNotificationAction(
+          NotificationActions.solveQuiz,
+          'Solve Quiz',
+          showsUserInterface: true,
+        ),
+      ];
+    }
+    if (reminder.type == ReminderType.water ||
+        reminder.type == ReminderType.sleep) {
       return const [
         AndroidNotificationAction(NotificationActions.taken, 'Done',
+            showsUserInterface: false),
+      ];
+    }
+    if (reminder.isMeal) {
+      return const [
+        AndroidNotificationAction(NotificationActions.taken, 'Taken',
+            showsUserInterface: false),
+        AndroidNotificationAction(NotificationActions.missed, 'Missed',
             showsUserInterface: false),
       ];
     }
@@ -228,6 +311,47 @@ class LocalNotificationScheduler implements ReminderScheduler {
 
   @override
   Future<void> cancelAll() => _plugin.cancelAll();
+
+  /// Same as [cancelAll] but leaves a currently ringing wake-up alarm alone, so
+  /// a reschedule (app open, 6-hourly maintenance) can never silence it.
+  Future<void> _cancelAllExceptRingingAlarm() async {
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    final ringing = <int>{};
+    try {
+      final active = await android?.getActiveNotifications() ?? const [];
+      for (final n in active) {
+        if (NotificationChannels.isWakeAlarmChannel(n.channelId) &&
+            n.id != null) {
+          ringing.add(n.id!);
+        }
+      }
+    } catch (e) {
+      _log.w('Could not inspect active notifications: $e');
+    }
+    if (ringing.isEmpty) {
+      await _plugin.cancelAll();
+      return;
+    }
+    for (final p in await _plugin.pendingNotificationRequests()) {
+      if (!ringing.contains(p.id)) await _plugin.cancel(p.id);
+    }
+    for (final n in await android?.getActiveNotifications() ?? const []) {
+      if (n.id != null && !ringing.contains(n.id)) await _plugin.cancel(n.id!);
+    }
+  }
+
+  Future<SleepConfig> _readSleepConfig() async {
+    try {
+      await LocalStore.instance.init();
+      final raw = LocalStore.instance.singletons.get('sleep');
+      return raw == null
+          ? const SleepConfig()
+          : SleepConfig.fromMap(LocalStore.normalize(raw));
+    } catch (_) {
+      return const SleepConfig();
+    }
+  }
 
   @override
   Future<void> showLowStockNotification({
@@ -270,7 +394,7 @@ class LocalNotificationScheduler implements ReminderScheduler {
       priority: Priority.high,
     );
 
-    const iosDetails = DarwinNotificationDetails(
+    const darwinDetails = DarwinNotificationDetails(
       interruptionLevel: InterruptionLevel.timeSensitive,
     );
 
@@ -279,7 +403,11 @@ class LocalNotificationScheduler implements ReminderScheduler {
         notificationId,
         title,
         body,
-        NotificationDetails(android: androidDetails, iOS: iosDetails),
+        NotificationDetails(
+          android: androidDetails,
+          iOS: darwinDetails,
+          macOS: darwinDetails,
+        ),
         payload: payload,
       );
     } catch (e) {

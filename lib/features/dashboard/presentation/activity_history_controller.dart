@@ -144,6 +144,13 @@ class ActivityHistoryController extends GetxController {
     final entries = <ActivityEntry>[];
 
     for (final log in allReminderLogs) {
+      if (log.isMeal &&
+          (log.status == ReminderStatus.missed ||
+              log.action == ReminderAction.missed) &&
+          log.confirmedAt == null) {
+        continue;
+      }
+
       final rawTime = log.confirmedAt ?? log.scheduledTime;
       final localTime = rawTime.toLocal();
       final logCalDay = DateTime(localTime.year, localTime.month, localTime.day);

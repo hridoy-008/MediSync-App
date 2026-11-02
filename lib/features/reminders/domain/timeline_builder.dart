@@ -60,10 +60,24 @@ class TimelineBuilder {
         matchedLog ??= dayLogs.firstWhereOrNull(
             (l) => l.reminderId == r.id && !processedLogIds.contains(l.id));
 
+        final bool isMeal = r.isMeal;
+
+        // An automated missed log for a meal has confirmedAt == null.
+        // It must NOT be treated as a user-confirmed action.
+        final bool isAutomatedMissedMeal = isMeal &&
+            matchedLog != null &&
+            (matchedLog.status == ReminderStatus.missed ||
+                matchedLog.action == ReminderAction.missed) &&
+            matchedLog.confirmedAt == null;
+
         final ReminderStatus status;
-        if (matchedLog != null) {
+        if (matchedLog != null && !isAutomatedMissedMeal) {
           processedLogIds.add(matchedLog.id);
           status = matchedLog.status;
+        } else if (isMeal) {
+          // A meal MUST NEVER become missed automatically.
+          // It remains pending until the user explicitly records it (taken or missed).
+          status = ReminderStatus.pending;
         } else if (isPastDay) {
           status = ReminderStatus.missed;
         } else if (targetDay == todayStart) {
@@ -138,6 +152,12 @@ class TimelineBuilder {
     // Include any recorded logs for that day that were not matched to an occurrence
     for (final log in dayLogs) {
       if (processedLogIds.contains(log.id)) continue;
+      if (log.isMeal &&
+          (log.status == ReminderStatus.missed ||
+              log.action == ReminderAction.missed) &&
+          log.confirmedAt == null) {
+        continue;
+      }
       processedLogIds.add(log.id);
 
       final logTime = (log.confirmedAt ?? log.scheduledTime).toLocal();

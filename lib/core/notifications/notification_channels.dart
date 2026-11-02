@@ -20,6 +20,7 @@ class NotificationChannels {
     description: 'Meal-time reminders',
     importance: Importance.high,
     playSound: true,
+    enableVibration: true,
   );
 
   static const water = AndroidNotificationChannel(
@@ -51,6 +52,57 @@ class NotificationChannels {
     playSound: true,
   );
 
+  // Wake-Up Alarm channels. Android fixes sound/vibration per channel, so the
+  // user's sound/vibrate settings pick one of these four.
+  static const wakeAlarm = AndroidNotificationChannel(
+    'wake_alarm_channel',
+    'Wake-Up Alarm',
+    description: 'Wake-up alarm that rings until the quiz is solved',
+    importance: Importance.max,
+    playSound: true,
+    enableVibration: true,
+    audioAttributesUsage: AudioAttributesUsage.alarm,
+  );
+
+  static const wakeAlarmSoundOnly = AndroidNotificationChannel(
+    'wake_alarm_sound_channel',
+    'Wake-Up Alarm (sound only)',
+    description: 'Wake-up alarm without vibration',
+    importance: Importance.max,
+    playSound: true,
+    enableVibration: false,
+    audioAttributesUsage: AudioAttributesUsage.alarm,
+  );
+
+  static const wakeAlarmVibrateOnly = AndroidNotificationChannel(
+    'wake_alarm_vibrate_channel',
+    'Wake-Up Alarm (vibration only)',
+    description: 'Wake-up alarm without sound',
+    importance: Importance.max,
+    playSound: false,
+    enableVibration: true,
+  );
+
+  static const wakeAlarmSilent = AndroidNotificationChannel(
+    'wake_alarm_silent_channel',
+    'Wake-Up Alarm (silent)',
+    description: 'Wake-up alarm without sound or vibration',
+    importance: Importance.max,
+    playSound: false,
+    enableVibration: false,
+  );
+
+  static AndroidNotificationChannel wakeAlarmFor({
+    required bool sound,
+    required bool vibrate,
+  }) =>
+      sound
+          ? (vibrate ? wakeAlarm : wakeAlarmSoundOnly)
+          : (vibrate ? wakeAlarmVibrateOnly : wakeAlarmSilent);
+
+  static bool isWakeAlarmChannel(String? id) =>
+      id != null && id.startsWith('wake_alarm_');
+
   static List<AndroidNotificationChannel> all = const [
     medicine,
     meal,
@@ -58,6 +110,10 @@ class NotificationChannels {
     sleep,
     missed,
     lowStock,
+    wakeAlarm,
+    wakeAlarmSoundOnly,
+    wakeAlarmVibrateOnly,
+    wakeAlarmSilent,
   ];
 
   static AndroidNotificationChannel forType(ReminderType type) =>
@@ -75,4 +131,6 @@ class NotificationActions {
   static const snooze = 'action_snooze';
   static const skip = 'action_skip';
   static const open = 'action_open';
+  static const missed = 'action_missed';
+  static const solveQuiz = 'action_solve_quiz';
 }

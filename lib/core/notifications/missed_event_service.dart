@@ -32,9 +32,11 @@ class MissedEventService {
     };
 
     for (final r in reminders) {
-      // Only nudge for medicine + meal (habit reminders aren't "missed").
-      if (r.type == ReminderType.water || r.type == ReminderType.sleep)
-        continue;
+      // Only auto-mark medicine reminders as missed.
+      // Meals MUST NEVER become missed automatically.
+      // Water + sleep habit reminders are also skipped.
+      if (r.isMeal) continue;
+      if (r.type != ReminderType.medicine) continue;
 
       for (final occ in r.recurrence.occurrencesBetween(from, now)) {
         final graceEnd = occ.add(Duration(minutes: r.graceWindowMins));

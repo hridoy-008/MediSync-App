@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 import '../../domain/enums.dart';
@@ -20,6 +22,10 @@ class MlKitOcrService implements OcrService {
 
   @override
   Future<Result<OcrResult>> recognize(String imagePath) async {
+    if (!Platform.isAndroid && !Platform.isIOS) {
+      _log.w('On-device ML Kit OCR is only supported on Android/iOS.');
+      return Err(Failure('On-device OCR is not supported on macOS.'));
+    }
     final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
     try {
       final input = InputImage.fromFilePath(imagePath);

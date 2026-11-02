@@ -40,9 +40,18 @@ void onBackgroundNotificationResponse(NotificationResponse response) async {
 }
 
 Future<void> _persistAction(ReminderPayload payload, String? actionId) async {
+  if (actionId == null ||
+      actionId.isEmpty ||
+      actionId == NotificationActions.open ||
+      actionId == NotificationActions.solveQuiz) {
+    // Tapping the notification body / Solve Quiz only opens the app; the alarm
+    // is logged when the quiz is completed.
+    return;
+  }
   try {
     await LocalStore.instance.init();
     final action = _actionFrom(actionId);
+    if (action == null) return;
     final log = ReminderLog(
       id: _logId(payload),
       reminderId: payload.reminderId,
@@ -67,11 +76,12 @@ Future<void> _persistAction(ReminderPayload payload, String? actionId) async {
 String _logId(ReminderPayload p) =>
     'log_${p.reminderId}_${p.scheduledTime.millisecondsSinceEpoch}';
 
-ReminderAction _actionFrom(String? actionId) => switch (actionId) {
+ReminderAction? _actionFrom(String? actionId) => switch (actionId) {
       NotificationActions.taken => ReminderAction.taken,
+      NotificationActions.missed => ReminderAction.missed,
       NotificationActions.snooze => ReminderAction.snoozed,
       NotificationActions.skip => ReminderAction.skipped,
-      _ => ReminderAction.taken, // tapping body = acknowledged
+      _ => null,
     };
 
 ReminderStatus _statusFrom(ReminderAction a) => switch (a) {
