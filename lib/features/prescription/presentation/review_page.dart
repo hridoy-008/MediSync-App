@@ -6,6 +6,7 @@ import '../../../core/localization/l10n.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/ocr/interaction_checker.dart';
 import '../../../domain/entities/prescription.dart';
+import '../../reminders/domain/dose_pattern.dart';
 import '../../../domain/enums.dart';
 import 'prescription_flow_controller.dart';
 
@@ -71,7 +72,8 @@ class _ReviewPageState extends State<ReviewPage> {
                 (i) => Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: _MedicineEditor(
-                    key: ValueKey(draft.medicines[i].id),
+                    key: ValueKey(
+                        '${draft.medicines[i].id}_${controller.editorRevision.value}'),
                     index: i,
                     medicine: draft.medicines[i],
                     onChanged: (m) => controller.updateMedicine(i, m),
@@ -170,6 +172,10 @@ class _MedicineEditorState extends State<_MedicineEditor> {
       TextEditingController(text: widget.medicine.name);
   late final TextEditingController _dose =
       TextEditingController(text: widget.medicine.dose);
+  late final TextEditingController _pattern =
+      TextEditingController(text: widget.medicine.dosePattern);
+  late final TextEditingController _duration = TextEditingController(
+      text: widget.medicine.durationDays?.toString() ?? '');
   late final TextEditingController _stockCount =
       TextEditingController(text: widget.medicine.stockCount?.toString() ?? '');
   late final TextEditingController _lowStockThreshold = TextEditingController(
@@ -182,12 +188,16 @@ class _MedicineEditorState extends State<_MedicineEditor> {
   void dispose() {
     _name.dispose();
     _dose.dispose();
+    _pattern.dispose();
+    _duration.dispose();
     _stockCount.dispose();
     _lowStockThreshold.dispose();
     super.dispose();
   }
 
   void _emit() => widget.onChanged(_m);
+
+  bool get _bangla => Get.find<LocaleController>().isBangla;
 
   FieldConfidence _conf(String field) =>
       _m.confidence[field] ?? FieldConfidence.high;
@@ -237,6 +247,51 @@ class _MedicineEditorState extends State<_MedicineEditor> {
             },
           ),
           const SizedBox(height: AppSpacing.xs),
+          EditableFieldCard(
+            label: _bangla
+                ? 'ডোজ প্যাটার্ন (সকাল + দুপুর + রাত)'
+                : 'Dosage pattern (breakfast + lunch + dinner)',
+            controller: _pattern,
+            confidence: _conf('dosePattern'),
+            verifyLabel: l.pleaseVerify,
+            hint: 'e.g. 1+0+1',
+            onChanged: (v) {
+              final ok = DosePattern.tryParse(v) != null;
+              setState(() => _m = _m.copyWith(
+                    dosePattern: v,
+                    confidence: {
+                      ..._m.confidence,
+                      'dosePattern':
+                          ok ? FieldConfidence.high : FieldConfidence.low,
+                    },
+                  ));
+              _emit();
+            },
+          ),
+          _PatternSummary(
+            pattern: _pattern.text,
+            fallback: _m.dose,
+            timing: _m.timing,
+            bangla: _bangla,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          TextFormField(
+            controller: _duration,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText:
+                  _bangla ? 'কত দিন খেতে হবে (খালি = সীমাহীন)' : 'Duration in days (blank = no end)',
+              hintText: 'e.g. 7',
+            ),
+            onChanged: (v) {
+              final days = int.tryParse(v.trim());
+              _m = (days != null && days > 0)
+                  ? _m.copyWith(durationDays: days)
+                  : _m.copyWith(clearDurationDays: true);
+              _emit();
+            },
+          ),
+          const SizedBox(height: AppSpacing.xs),
           Row(
             children: [
               Expanded(
@@ -244,7 +299,13 @@ class _MedicineEditorState extends State<_MedicineEditor> {
                 value: _m.frequencyPerDay,
                 label: l.fieldFrequency,
                 onChanged: (v) {
-                  setState(() => _m = _m.copyWith(frequencyPerDay: v));
+                  setState(() => _m = _m.copyWith(
+                        frequencyPerDay: v,
+                        confidence: {
+                          ..._m.confidence,
+                          'frequency': FieldConfidence.high,
+                        },
+                      ));
                   _emit();
                 },
               )),
@@ -253,7 +314,13 @@ class _MedicineEditorState extends State<_MedicineEditor> {
                   child: _TimingDropdown(
                 value: _m.timing,
                 onChanged: (v) {
-                  setState(() => _m = _m.copyWith(timing: v));
+                  setState(() => _m = _m.copyWith(
+                        timing: v,
+                        confidence: {
+                          ..._m.confidence,
+                          'timing': FieldConfidence.high,
+                        },
+                      ));
                   _emit();
                 },
               )),
@@ -431,6 +498,70 @@ class _TimingDropdown extends StatelessWidget {
           onChanged: (v) => v == null ? null : onChanged(v),
         ),
       ],
+    );
+  }
+}
+
+/// Shows how a dosage pattern will be scheduled (so the user can confirm it
+/// before reminders are activated), or why it can't be.
+class _PatternSummary extends StatelessWidget {
+  const _PatternSummary({
+    required this.pattern,
+    required this.fallback,
+    required this.timing,
+    required this.bangla,
+  });
+
+  final String pattern;
+  final String fallback;
+  final FoodTiming timing;
+  final bool bangla;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = pattern.trim().isNotEmpty ? pattern : fallback;
+    final parsed = DosePattern.tryParse(text);
+    final style = Theme.of(context).textTheme.bodySmall;
+
+    if (parsed == null) {
+      if (pattern.trim().isEmpty) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Text(
+          bangla
+              ? 'প্যাটার্নটি বোঝা যায়নি — 1+0+1 এর মতো লিখুন'
+              : 'Pattern not understood — write it like 1+0+1',
+          style: style?.copyWith(color: context.colors.danger),
+        ),
+      );
+    }
+
+    String meal(MealType t) => bangla
+        ? switch (t) {
+            MealType.breakfast => 'সকাল',
+            MealType.lunch => 'দুপুর',
+            _ => 'রাত',
+          }
+        : switch (t) {
+            MealType.breakfast => 'Breakfast',
+            MealType.lunch => 'Lunch',
+            _ => 'Dinner',
+          };
+    final when = switch (timing) {
+      FoodTiming.beforeFood => bangla ? 'খাবারের আগে' : 'before food',
+      FoodTiming.afterFood => bangla ? 'খাবারের পরে' : 'after food',
+      FoodTiming.withFood => bangla ? 'খাবারের সাথে' : 'with food',
+      FoodTiming.anyTime => '',
+    };
+    final doses = parsed.slots
+        .map((s) => '${meal(s.meal)}: ${s.count}')
+        .join(' · ');
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Text(
+        when.isEmpty ? doses : '$doses · $when',
+        style: style?.copyWith(color: context.colors.primary),
+      ),
     );
   }
 }

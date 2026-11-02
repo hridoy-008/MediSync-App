@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import '../../domain/entities/prescription.dart';
 import '../../domain/enums.dart';
 import '../utils/bangla_numerals.dart';
+import '../../features/reminders/domain/dose_pattern.dart';
 import 'prescription_structurer.dart';
 
 /// Heuristic, on-device structurer (TRD §5 stub for the LLM step). It is
@@ -32,8 +33,13 @@ class RuleBasedStructurer implements PrescriptionStructurer {
       caseSensitive: false);
 
   // Dosing patterns: 1+0+1, 1-0-1, 1 0 1
-  static final _tripleDose =
-      RegExp(r'([\d০-৯])\s*[+\-x ]\s*([\d০-৯])\s*[+\-x ]\s*([\d০-৯])');
+  static final _tripleDose = DosePattern.regex;
+
+  // Treatment duration: "for 7 days", "2 weeks", "৭ দিন", "1 month".
+  static final _duration = RegExp(
+    r'(?:for\s+)?([\d০-৯]{1,3})\s*(days?|weeks?|wks?|months?|দিন|সপ্তাহ|মাস)',
+    caseSensitive: false,
+  );
   static final _testHint = RegExp(
       r'\b(cbc|x-?ray|usg|ultrasound|ecg|mri|ct|test|fbs|2hbs|hba1c|lipid|urine|s\.?creatinine)\b',
       caseSensitive: false);
@@ -149,6 +155,7 @@ class RuleBasedStructurer implements PrescriptionStructurer {
         .replaceAll(_medPrefix, '')
         .replaceAll(_medPrefixBn, '')
         .replaceAll(_tripleDose, '')
+        .replaceAll(_duration, '')
         .replaceAll(_freqCodes, '')
         .replaceAll(_freqCodesBn, '')
         .trim();
@@ -163,7 +170,9 @@ class RuleBasedStructurer implements PrescriptionStructurer {
               RegExp(RegExp.escape(doseOriginal), caseSensitive: false), '')
           .trim();
     }
-    name = name.replaceAll(RegExp(r'[-•·]+$'), '').trim();
+    // Drop barcode / batch-number runs picked up from packaging.
+    name = name.replaceAll(RegExp(r'[\d০-৯]{6,}'), '');
+    name = name.replaceAll(RegExp(r'[-•·,\s]+$'), '').trim();
 
     // Check if name is purely junk or empty
     final isJunkName = name.isEmpty ||
@@ -206,19 +215,49 @@ class RuleBasedStructurer implements PrescriptionStructurer {
       if (frequency == 0) frequency = 1;
     }
 
-    final timing = _timingFrom(original, normalized);
+    var timing = _timingFrom(original, normalized);
     confidence['timing'] = timing == FoodTiming.anyTime
         ? FieldConfidence.low
         : FieldConfidence.medium;
+
+    // Dose pattern (breakfast+lunch+dinner). Kept as its own field so the
+    // meal mapping survives review/edit instead of being collapsed to a count.
+    final pattern = DosePattern.tryParse(original);
+    if (pattern != null) {
+      confidence['dosePattern'] = FieldConfidence.high;
+      // A pattern means "with/after the meal"; when the text doesn't say which,
+      // default to after food but flag it for the user to verify.
+      if (timing == FoodTiming.anyTime) timing = FoodTiming.afterFood;
+    } else {
+      confidence['dosePattern'] = FieldConfidence.low;
+    }
+
+    final durationDays = _durationDaysFrom(normalized);
 
     return Medicine(
       id: _uuid.v4(),
       name: name,
       dose: dose,
-      frequencyPerDay: frequency,
+      frequencyPerDay: pattern?.dosesPerDay.clamp(1, 6) ?? frequency,
       timing: timing,
+      durationDays: durationDays,
+      dosePattern: pattern?.normalized ?? '',
       confidence: confidence,
     );
+  }
+
+  int? _durationDaysFrom(String normalized) {
+    final m = _duration.firstMatch(normalized);
+    if (m == null) return null;
+    final n = int.tryParse(BanglaNumerals.toWestern(m.group(1) ?? ''));
+    if (n == null || n <= 0) return null;
+    final unit = (m.group(2) ?? '').toLowerCase();
+    final days = unit.startsWith('w') || unit == 'সপ্তাহ'
+        ? n * 7
+        : unit.startsWith('m') || unit == 'মাস'
+            ? n * 30
+            : n;
+    return days > 365 ? null : days;
   }
 
   int _frequencyFromCodes(String normalized) {

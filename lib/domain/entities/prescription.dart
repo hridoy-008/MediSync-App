@@ -128,6 +128,7 @@ class Medicine extends Equatable {
     this.timing = FoodTiming.anyTime,
     this.durationDays,
     this.notes = '',
+    this.dosePattern = '',
     this.confidence = const {},
     this.stockCount,
     this.lowStockThreshold,
@@ -141,6 +142,9 @@ class Medicine extends Equatable {
   final FoodTiming timing;
   final int? durationDays;
   final String notes;
+
+  /// Breakfast+lunch+dinner pattern, e.g. `1+0+1`; empty when none was found.
+  final String dosePattern;
 
   // Stock inventory fields
   final int? stockCount;
@@ -159,7 +163,9 @@ class Medicine extends Equatable {
     int? frequencyPerDay,
     FoodTiming? timing,
     int? durationDays,
+    bool clearDurationDays = false,
     String? notes,
+    String? dosePattern,
     Map<String, FieldConfidence>? confidence,
     int? stockCount,
     int? lowStockThreshold,
@@ -171,8 +177,10 @@ class Medicine extends Equatable {
       dose: dose ?? this.dose,
       frequencyPerDay: frequencyPerDay ?? this.frequencyPerDay,
       timing: timing ?? this.timing,
-      durationDays: durationDays ?? this.durationDays,
+      durationDays:
+          clearDurationDays ? null : (durationDays ?? this.durationDays),
       notes: notes ?? this.notes,
+      dosePattern: dosePattern ?? this.dosePattern,
       confidence: confidence ?? this.confidence,
       stockCount: stockCount ?? this.stockCount,
       lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
@@ -188,6 +196,7 @@ class Medicine extends Equatable {
         'timing': timing.name,
         'durationDays': durationDays,
         'notes': notes,
+        'dosePattern': dosePattern,
         'confidence': confidence.map((k, v) => MapEntry(k, v.name)),
         'stockCount': stockCount,
         'lowStockThreshold': lowStockThreshold,
@@ -202,6 +211,7 @@ class Medicine extends Equatable {
         timing: enumByName(FoodTiming.values, m['timing'], FoodTiming.anyTime),
         durationDays: (m['durationDays'] as num?)?.toInt(),
         notes: m['notes'] as String? ?? '',
+        dosePattern: m['dosePattern'] as String? ?? '',
         confidence: (m['confidence'] as Map?)?.map(
               (k, v) => MapEntry(
                 k.toString(),
@@ -223,6 +233,7 @@ class Medicine extends Equatable {
         timing,
         durationDays,
         notes,
+        dosePattern,
         stockCount,
         lowStockThreshold,
         stockAlertEnabled,

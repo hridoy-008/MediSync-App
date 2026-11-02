@@ -163,10 +163,15 @@ class LocalNotificationScheduler implements ReminderScheduler {
             !reminder.title.contains('রিমাইন্ডার')
         ? '${reminder.title} Reminder'
         : reminder.title;
-    final title = isQuizAlarm ? 'Wake Up!' : mealTitle;
+    final doseMessage =
+        reminder.type == ReminderType.medicine ? reminder.doseMessageAt(fireTime) : null;
+    final title = isQuizAlarm
+        ? 'Wake Up!'
+        : (doseMessage != null ? 'Medicine Reminder' : mealTitle);
     final body = isQuizAlarm
         ? 'Solve the quiz to stop the alarm'
-        : (reminder.subtitle.isNotEmpty
+        : doseMessage ??
+            (reminder.subtitle.isNotEmpty
             ? reminder.subtitle
             : (reminder.isMeal
                 ? "It's time for your ${reminder.title.toLowerCase()}."
@@ -280,6 +285,17 @@ class LocalNotificationScheduler implements ReminderScheduler {
         AndroidNotificationAction(NotificationActions.taken, 'Taken',
             showsUserInterface: false),
         AndroidNotificationAction(NotificationActions.missed, 'Missed',
+            showsUserInterface: false),
+      ];
+    }
+    if (reminder.doseSlots.isNotEmpty) {
+      // Prescription dose reminders: explicit Taken / Missed (max 3 actions).
+      return const [
+        AndroidNotificationAction(NotificationActions.taken, 'Taken',
+            showsUserInterface: false),
+        AndroidNotificationAction(NotificationActions.missed, 'Missed',
+            showsUserInterface: false),
+        AndroidNotificationAction(NotificationActions.snooze, 'Snooze',
             showsUserInterface: false),
       ];
     }

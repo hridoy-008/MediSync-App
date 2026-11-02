@@ -1,32 +1,48 @@
-import '../../../core/utils/bangla_numerals.dart';
 import '../../../core/utils/recurrence.dart';
 import '../../../domain/entities/configs.dart';
 import '../../../domain/entities/prescription.dart';
 import '../../../domain/entities/reminder.dart';
 import '../../../domain/enums.dart';
+import 'dose_pattern.dart';
 
 /// Pure dose-to-schedule mapping (TRD §11 — unit-tested). Converts confirmed
 /// medical data + habit configs into [Reminder]s. No I/O.
 class ReminderGenerator {
   const ReminderGenerator();
 
-  static final _tripleDoseRegex =
-      RegExp(r'([\d০-৯])\s*[+\-x ]\s*([\d০-৯])\s*[+\-x ]\s*([\d০-৯])');
+  /// The dose pattern for [med]: the dedicated field first, then (for older
+  /// data / manual entry) the dose or notes text. Never inferred from anything
+  /// else.
+  DosePattern? patternFor(Medicine med) =>
+      DosePattern.tryParse(med.dosePattern) ??
+      DosePattern.tryParse(med.dose) ??
+      DosePattern.tryParse(med.notes);
 
-  List<int>? _parseTripleDosePattern(String text) {
-    if (text.isEmpty) return null;
-    final normalized = BanglaNumerals.toWestern(text);
-    final match = _tripleDoseRegex.firstMatch(normalized);
-    if (match == null) return null;
-    final s1 = int.tryParse(match.group(1) ?? '0') ?? 0;
-    final s2 = int.tryParse(match.group(2) ?? '0') ?? 0;
-    final s3 = int.tryParse(match.group(3) ?? '0') ?? 0;
-    if (s1 == 0 && s2 == 0 && s3 == 0) return null;
-    return [s1, s2, s3];
+  static MealConfig? _mealOfType(List<MealConfig> meals, MealType type) {
+    for (final m in meals) {
+      if (m.enabled && !m.isCustom && m.mealType == type) return m;
+    }
+    return null;
+  }
+
+  /// Meals a prescription needs (from dose patterns) that are missing or
+  /// disabled in the user's meal settings. Reminders must not be activated
+  /// until these are configured — the times are never guessed.
+  Set<MealType> missingMeals(Prescription prescription, List<MealConfig> meals) {
+    final missing = <MealType>{};
+    for (final med in prescription.medicines) {
+      final pattern = patternFor(med);
+      if (pattern == null) continue;
+      for (final slot in pattern.slots) {
+        if (_mealOfType(meals, slot.meal) == null) missing.add(slot.meal);
+      }
+    }
+    return missing;
   }
 
   /// Build medicine reminders from a confirmed prescription, anchoring
-  /// food-relative doses to the user's meal times (PRD P0-6).
+  /// food-relative doses to the user's meal times (PRD P0-6). One reminder per
+  /// medicine, with one fire time (and [DoseSlot]) per prescribed dose.
   List<Reminder> fromPrescription(
     Prescription prescription,
     List<MealConfig> meals,
@@ -34,10 +50,11 @@ class ReminderGenerator {
     final now = DateTime.now();
     final out = <Reminder>[];
     for (final med in prescription.medicines) {
-      final times = _timesForMedicine(med, meals);
+      final plan = _planFor(med, meals);
+      if (plan.times.isEmpty) continue; // pattern whose meals aren't set up
       final rule = RecurrenceRule(
         frequency: RecurrenceFrequency.daily,
-        timesOfDay: times,
+        timesOfDay: plan.times,
         startDate: DateTime(now.year, now.month, now.day),
         endDate: med.durationDays == null
             ? null
@@ -56,6 +73,7 @@ class ReminderGenerator {
         stockCount: med.stockCount,
         lowStockThreshold: med.lowStockThreshold,
         stockAlertEnabled: med.stockAlertEnabled,
+        doseSlots: plan.slots,
       ));
     }
     return out;
@@ -63,7 +81,12 @@ class ReminderGenerator {
 
   String _medSubtitle(Medicine med) {
     final parts = <String>[];
-    if (med.dose.isNotEmpty) parts.add(med.dose);
+    final pattern = patternFor(med);
+    // A dose that is only the pattern ("1+0+1") isn't a strength; show it once.
+    if (med.dose.isNotEmpty && DosePattern.tryParse(med.dose) == null) {
+      parts.add(med.dose);
+    }
+    if (pattern != null) parts.add(pattern.normalized);
     parts.add(switch (med.timing) {
       FoodTiming.beforeFood => 'before food',
       FoodTiming.afterFood => 'after food',
@@ -73,45 +96,47 @@ class ReminderGenerator {
     return parts.where((p) => p.isNotEmpty).join(' · ');
   }
 
-  /// Choose N daily times. If food-relative + meals exist, anchor to meals
-  /// (±15 min); else spread sensibly across waking hours.
-  List<int> _timesForMedicine(Medicine med, List<MealConfig> meals) {
+  /// Choose the daily times (and per-meal slots for pattern medicines).
+  /// A dose pattern maps each non-zero position to its own meal by type; if
+  /// food-relative + meals exist otherwise, anchor to meals (±15 min); else
+  /// spread sensibly across waking hours.
+  ({List<int> times, List<DoseSlot> slots}) _planFor(
+      Medicine med, List<MealConfig> meals) {
     final enabledMeals = meals.where((m) => m.enabled).toList()
       ..sort((a, b) => a.minutesFromMidnight.compareTo(b.minutesFromMidnight));
 
-    // 1. Try triple dose pattern parsing from med.dose or med.notes
-    final pattern =
-        _parseTripleDosePattern(med.dose) ?? _parseTripleDosePattern(med.notes);
+    final offset = switch (med.timing) {
+      FoodTiming.beforeFood => -15,
+      FoodTiming.afterFood => 15,
+      FoodTiming.withFood => 0,
+      FoodTiming.anyTime => 0,
+    };
 
-    if (pattern != null && enabledMeals.isNotEmpty) {
-      final offset = switch (med.timing) {
-        FoodTiming.beforeFood => -15,
-        FoodTiming.afterFood => 15,
-        FoodTiming.withFood => 0,
-        FoodTiming.anyTime => 0,
-      };
-
-      final times = <int>[];
-      for (var i = 0; i < 3; i++) {
-        if (pattern[i] > 0 && i < enabledMeals.length) {
-          final mealMins = enabledMeals[i].minutesFromMidnight;
-          times.add((mealMins + offset).clamp(0, 24 * 60 - 1));
-        }
+    final pattern = patternFor(med);
+    if (pattern != null) {
+      final slots = <DoseSlot>[];
+      for (final slot in pattern.slots) {
+        final meal = _mealOfType(meals, slot.meal);
+        if (meal == null) continue;
+        slots.add(DoseSlot(
+          minutes: (meal.minutesFromMidnight + offset).clamp(0, 24 * 60 - 1),
+          mealType: slot.meal,
+          count: slot.count,
+        ));
       }
-      if (times.isNotEmpty) return times;
+      slots.sort((a, b) => a.minutes.compareTo(b.minutes));
+      return (times: slots.map((s) => s.minutes).toList(), slots: slots);
     }
 
-    // 2. Existing fallback logic
     final freq = med.frequencyPerDay.clamp(1, 6);
     if (med.timing != FoodTiming.anyTime && enabledMeals.isNotEmpty) {
-      final offset = med.timing == FoodTiming.beforeFood ? -15 : 15;
       final anchored = enabledMeals
           .take(freq)
           .map((m) => (m.minutesFromMidnight + offset).clamp(0, 24 * 60 - 1))
           .toList();
-      if (anchored.length == freq) return anchored;
+      if (anchored.length == freq) return (times: anchored, slots: const []);
     }
-    return _spread(freq);
+    return (times: _spread(freq), slots: const []);
   }
 
   /// Default daily spreads (minutes from midnight).

@@ -6,6 +6,7 @@ import '../../../core/localization/l10n.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/utils/time_format.dart';
 import '../../../domain/entities/reminder.dart';
+import '../../../domain/enums.dart';
 import 'prescription_flow_controller.dart';
 
 /// Schedule preview (Design §5.3 step 4): shows the reminders about to be
@@ -81,6 +82,21 @@ class _ReminderPreviewCard extends StatelessWidget {
   final bool bangla;
   final void Function(int timeIndex, int currentMinutes) onEditTime;
 
+  String _chipLabel(int minutes) {
+    final time = TimeFormat.fromMinutes(minutes, bangla: bangla);
+    for (final s in reminder.doseSlots) {
+      if (s.minutes == minutes) {
+        final meal = switch (s.mealType) {
+          MealType.breakfast => bangla ? 'সকাল' : 'Breakfast',
+          MealType.lunch => bangla ? 'দুপুর' : 'Lunch',
+          _ => bangla ? 'রাত' : 'Dinner',
+        };
+        return '$meal · $time · ×${s.count}';
+      }
+    }
+    return time;
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -115,7 +131,7 @@ class _ReminderPreviewCard extends StatelessWidget {
             children: List.generate(times.length, (ti) {
               return ActionChip(
                 avatar: const Icon(Icons.schedule, size: 18),
-                label: Text(TimeFormat.fromMinutes(times[ti], bangla: bangla)),
+                label: Text(_chipLabel(times[ti])),
                 onPressed: () => onEditTime(ti, times[ti]),
               );
             }),

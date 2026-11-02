@@ -39,15 +39,30 @@ class ReminderService {
 
   /// Persist a (possibly user-adjusted) reminder set, then (re)build the OS
   /// schedule. The commit step of the capture flow.
-  Future<void> commitReminders(List<Reminder> reminders) async {
+  ///
+  /// [replaceRefId] first removes every reminder previously created for that
+  /// prescription, so re-confirming or editing a prescription replaces its
+  /// schedule instead of duplicating it (or leaving removed medicines behind).
+  Future<void> commitReminders(
+    List<Reminder> reminders, {
+    String? replaceRefId,
+  }) async {
+    if (replaceRefId != null) await _repo.deleteByRef(replaceRefId);
     await _repo.saveAll(reminders);
     await refreshSchedule();
+  }
+
+  /// Meals this prescription's dose patterns need that the user hasn't set up
+  /// (missing or disabled). Empty means reminders can be activated.
+  Future<Set<MealType>> missingMealsFor(Prescription prescription) async {
+    final meals = (await _config.getMeals()).valueOrNull ?? const [];
+    return _generator.missingMeals(prescription, meals);
   }
 
   /// Generate + persist + schedule in one shot (preview skipped).
   Future<List<Reminder>> applyPrescription(Prescription prescription) async {
     final reminders = await previewForPrescription(prescription);
-    await commitReminders(reminders);
+    await commitReminders(reminders, replaceRefId: prescription.id);
     return reminders;
   }
 
@@ -127,7 +142,8 @@ class ReminderService {
         reminder.lowStockThreshold != null) {
       final oldStock = reminder.stockCount!;
       final threshold = reminder.lowStockThreshold!;
-      final doseCount = _parseDoseCount(reminder.subtitle);
+      final doseCount =
+          reminder.slotAt(scheduledTime)?.count ?? _parseDoseCount(reminder.subtitle);
       final newStock = (oldStock - doseCount).clamp(0, 9999);
       final updated = reminder.copyWith(stockCount: newStock);
       await _repo.save(updated);

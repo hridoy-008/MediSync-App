@@ -22,6 +22,7 @@ class Reminder extends Equatable {
     this.stockCount,
     this.lowStockThreshold,
     this.stockAlertEnabled = false,
+    this.doseSlots = const [],
   });
 
   final String id;
@@ -44,6 +45,33 @@ class Reminder extends Equatable {
   final int? lowStockThreshold;
   final bool stockAlertEnabled;
 
+  /// Per-meal doses for prescription-pattern medicines (empty otherwise).
+  final List<DoseSlot> doseSlots;
+
+  /// The slot whose reminder fires at [t], if any.
+  DoseSlot? slotAt(DateTime t) {
+    final minutes = t.hour * 60 + t.minute;
+    for (final s in doseSlots) {
+      if (s.minutes == minutes) return s;
+    }
+    return null;
+  }
+
+  /// Notification text for the prescribed dose firing at [t], e.g.
+  /// "Take 1 tablet of Napa after breakfast." Null when [t] isn't a slot.
+  String? doseMessageAt(DateTime t) {
+    final slot = slotAt(t);
+    if (slot == null) return null;
+    final when = switch (foodTiming) {
+      FoodTiming.beforeFood => 'before',
+      FoodTiming.afterFood => 'after',
+      FoodTiming.withFood => 'with',
+      _ => 'at',
+    };
+    final unit = slot.count == 1 ? 'tablet' : 'tablets';
+    return 'Take ${slot.count} $unit of $title $when ${slot.mealType.name}.';
+  }
+
   bool get isLowStock =>
       (stockAlertEnabled && stockCount != null && lowStockThreshold != null)
           ? stockCount! <= lowStockThreshold!
@@ -59,6 +87,7 @@ class Reminder extends Equatable {
     int? stockCount,
     int? lowStockThreshold,
     bool? stockAlertEnabled,
+    List<DoseSlot>? doseSlots,
   }) {
     return Reminder(
       id: id,
@@ -75,6 +104,7 @@ class Reminder extends Equatable {
       stockCount: stockCount ?? this.stockCount,
       lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
       stockAlertEnabled: stockAlertEnabled ?? this.stockAlertEnabled,
+      doseSlots: doseSlots ?? this.doseSlots,
     );
   }
 
@@ -100,6 +130,7 @@ class Reminder extends Equatable {
         'stockCount': stockCount,
         'lowStockThreshold': lowStockThreshold,
         'stockAlertEnabled': stockAlertEnabled,
+        'doseSlots': doseSlots.map((e) => e.toMap()).toList(),
       };
 
   factory Reminder.fromMap(Map<String, dynamic> m) {
@@ -145,6 +176,11 @@ class Reminder extends Equatable {
       stockCount: m['stockCount'] as int?,
       lowStockThreshold: m['lowStockThreshold'] as int?,
       stockAlertEnabled: m['stockAlertEnabled'] as bool? ?? false,
+      doseSlots: (m['doseSlots'] as List?)
+              ?.map((e) =>
+                  DoseSlot.fromMap(Map<String, dynamic>.from(e as Map)))
+              .toList() ??
+          const [],
     );
   }
 
@@ -158,6 +194,7 @@ class Reminder extends Equatable {
         stockCount,
         lowStockThreshold,
         stockAlertEnabled,
+        doseSlots,
       ];
 
   bool get isMeal {
@@ -352,4 +389,40 @@ extension ReminderLogMealHelper on ReminderLog {
     }
     return false;
   }
+}
+
+/// One prescribed dose tied to a meal: [count] tablets at [minutes] after
+/// midnight, anchored to [mealType].
+class DoseSlot extends Equatable {
+  const DoseSlot({
+    required this.minutes,
+    required this.mealType,
+    required this.count,
+  });
+
+  final int minutes;
+  final MealType mealType;
+  final int count;
+
+  DoseSlot copyWith({int? minutes}) => DoseSlot(
+        minutes: minutes ?? this.minutes,
+        mealType: mealType,
+        count: count,
+      );
+
+  Map<String, dynamic> toMap() => {
+        'minutes': minutes,
+        'mealType': mealType.name,
+        'count': count,
+      };
+
+  factory DoseSlot.fromMap(Map<String, dynamic> m) => DoseSlot(
+        minutes: (m['minutes'] as num).toInt(),
+        mealType:
+            enumByName(MealType.values, m['mealType'], MealType.breakfast),
+        count: (m['count'] as num?)?.toInt() ?? 1,
+      );
+
+  @override
+  List<Object?> get props => [minutes, mealType, count];
 }
