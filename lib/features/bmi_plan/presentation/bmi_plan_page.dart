@@ -260,26 +260,42 @@ class _DietSectionState extends State<_DietSection> {
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           if (m.options.length > 1)
-                            ToggleButtons(
-                              isDense: true,
-                              constraints: const BoxConstraints(
-                                  minHeight: 28, minWidth: 32),
-                              isSelected: List.generate(
-                                  m.options.length, (i) => i == selectedIdx),
-                              onPressed: (index) {
-                                setState(() {
-                                  _selectedOptions[m.label] = index;
-                                });
-                              },
-                              children: List.generate(
-                                m.options.length,
-                                (i) => Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 8),
-                                  child: Text('${i + 1}',
-                                      style: const TextStyle(fontSize: 12)),
-                                ),
-                              ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: List.generate(m.options.length, (i) {
+                                final isSelected = i == selectedIdx;
+                                return Padding(
+                                  padding: const EdgeInsets.only(left: 4),
+                                  child: InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedOptions[m.label] = i;
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? context.colors.primary
+                                            : context.colors.surfaceVariant,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        'Opt ${i + 1}',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: isSelected
+                                              ? Colors.white
+                                              : context.colors.onSurface,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
                             ),
                         ],
                       ),
