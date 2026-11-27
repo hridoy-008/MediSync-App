@@ -237,7 +237,7 @@ class DashboardController extends GetxController {
     await _loadExercisePlan(targetDay);
     final gEvents = await GoogleCalendarService.fetchEventsForDay(targetDay);
     googleCalendarEvents.assignAll(gEvents);
-    isGoogleCalendarConnected.value = GoogleCalendarService.currentUser != null;
+    isGoogleCalendarConnected.value = GoogleCalendarService.isConnected;
 
     debugPrint('[DATE HISTORY] Filtered Records: ${items.length}');
     debugPrint('[HISTORY] RECORDS FOUND: ${items.length}');
