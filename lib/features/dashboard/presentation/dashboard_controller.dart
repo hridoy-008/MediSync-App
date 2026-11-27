@@ -345,6 +345,21 @@ class DashboardController extends GetxController {
     }
   }
 
+  Future<void> resetAction(TimelineItem item) async {
+    final targetLog = logs.firstWhereOrNull((l) {
+      final lt = (l.confirmedAt ?? l.scheduledTime).toLocal();
+      final st = item.scheduledTime.toLocal();
+      return l.reminderId == item.reminder.id &&
+          lt.year == st.year &&
+          lt.month == st.month &&
+          lt.day == st.day;
+    });
+    if (targetLog != null) {
+      await _reminders.deleteLog(targetLog.id);
+      await loadDate();
+    }
+  }
+
   /// Called on app open (and from the foreground notification callback).
   Future<void> onResume() async {
     await _service.refreshSchedule();
