@@ -119,6 +119,21 @@ class ReminderService {
     required DateTime scheduledTime,
     required ReminderAction action,
   }) async {
+    final existingLogs = (await _repo.getLogs()).valueOrNull ?? const [];
+    for (final l in existingLogs) {
+      if (l.reminderId == reminder.id) {
+        final lTime = l.scheduledTime.toLocal();
+        final sTime = scheduledTime.toLocal();
+        if (lTime.year == sTime.year &&
+            lTime.month == sTime.month &&
+            lTime.day == sTime.day &&
+            lTime.hour == sTime.hour &&
+            (lTime.minute - sTime.minute).abs() <= 15) {
+          await _repo.deleteLog(l.id);
+        }
+      }
+    }
+
     final status = switch (action) {
       ReminderAction.taken => ReminderStatus.taken,
       ReminderAction.snoozed => ReminderStatus.snoozed,
