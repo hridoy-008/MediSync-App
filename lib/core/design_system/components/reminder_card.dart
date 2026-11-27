@@ -712,22 +712,23 @@ class _DietOptionsSelectorState extends State<_DietOptionsSelector> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final currentOption =
-        widget.options[_selectedIndex.clamp(0, widget.options.length - 1)];
 
     return Container(
-      margin: const EdgeInsets.only(top: AppSpacing.xs),
+      margin: const EdgeInsets.only(top: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: colors.surfaceVariant.withOpacity(0.35),
+        color: colors.surfaceVariant.withOpacity(0.3),
         borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: colors.outline.withOpacity(0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Icon(Icons.restaurant_menu_rounded,
+                  size: 16, color: colors.primary),
+              const SizedBox(width: 6),
               Text(
                 widget.isBangla
                     ? 'ডায়েট বিকল্প (Weekly Options):'
@@ -737,67 +738,120 @@ class _DietOptionsSelectorState extends State<_DietOptionsSelector> {
                       color: colors.primary,
                     ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(widget.options.length, (i) {
-                  final isSelected = i == _selectedIndex;
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 4),
-                    child: InkWell(
-                      onTap: () => setState(() => _selectedIndex = i),
-                      borderRadius: BorderRadius.circular(4),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? colors.primary
-                              : colors.surfaceVariant,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'Opt ${i + 1}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected
-                                ? Colors.white
-                                : colors.onSurface,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-              ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            currentOption.title,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: colors.primary,
+          const SizedBox(height: AppSpacing.xs),
+          ...List.generate(widget.options.length, (i) {
+            final option = widget.options[i];
+            final isSelected = i == _selectedIndex;
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              margin: const EdgeInsets.only(bottom: 6),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? colors.primary.withOpacity(0.1)
+                    : colors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(
+                  color: isSelected
+                      ? colors.primary
+                      : colors.outline.withOpacity(0.3),
+                  width: isSelected ? 1.5 : 1,
                 ),
-          ),
-          const SizedBox(height: 2),
-          ...currentOption.items.map(
-            (item) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('• '),
-                  Expanded(
-                    child: Text(
-                      item,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                ],
               ),
-            ),
-          ),
+              child: InkWell(
+                onTap: () => setState(() => _selectedIndex = i),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          AnimatedRotation(
+                            turns: isSelected ? 0.05 : 0.0,
+                            duration: const Duration(milliseconds: 200),
+                            child: Icon(
+                              isSelected
+                                  ? Icons.stars_rounded
+                                  : Icons.circle_outlined,
+                              size: 16,
+                              color: isSelected
+                                  ? colors.primary
+                                  : colors.onSurfaceMuted,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              '${widget.isBangla ? 'বিকল্প' : 'Option'} ${i + 1}: ${option.title}',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: isSelected
+                                        ? colors.primary
+                                        : colors.onSurface,
+                                  ),
+                            ),
+                          ),
+                          if (isSelected)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: colors.primary,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                widget.isBangla ? 'নির্বাচিত' : 'Selected',
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      if (isSelected) ...[
+                        const SizedBox(height: 6),
+                        ...option.items.map(
+                          (item) => Padding(
+                            padding: const EdgeInsets.only(left: 22, bottom: 2),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('• ',
+                                    style: TextStyle(
+                                        color: colors.primary,
+                                        fontWeight: FontWeight.bold)),
+                                Expanded(
+                                  child: Text(
+                                    item,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: colors.onSurface,
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
         ],
       ),
     );
