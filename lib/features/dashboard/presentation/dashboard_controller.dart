@@ -8,6 +8,7 @@ import '../../../core/data/local_store.dart';
 import '../../../core/design_system/app_theme.dart';
 import '../../../core/design_system/tokens.dart';
 import '../../../core/localization/locale_controller.dart';
+import '../../../core/utils/google_calendar_service.dart';
 import '../../../core/utils/motivational_messages.dart';
 import '../../../domain/entities/configs.dart';
 import '../../../domain/entities/plan.dart';
@@ -73,6 +74,45 @@ class DashboardController extends GetxController {
   // Exercise Plan state on Dashboard
   final Rxn<ExercisePlan> exercisePlan = Rxn<ExercisePlan>();
   final completedExercises = <String>[].obs;
+
+  // Google Calendar Integration
+  final googleCalendarEvents = <GoogleCalendarEvent>[].obs;
+  final isGoogleCalendarConnected = false.obs;
+
+  Future<void> connectGoogleCalendar() async {
+    final success = await GoogleCalendarService.signIn();
+    if (success) {
+      isGoogleCalendarConnected.value = true;
+      await loadDate();
+      Get.snackbar(
+        'Google Calendar',
+        'Successfully connected to Google Calendar!',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } else {
+      Get.snackbar(
+        'Google Calendar',
+        'Failed to connect to Google Calendar.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  Future<void> disconnectGoogleCalendar() async {
+    await GoogleCalendarService.signOut();
+    isGoogleCalendarConnected.value = false;
+    googleCalendarEvents.clear();
+    await loadDate();
+    Get.snackbar(
+      'Google Calendar',
+      'Disconnected from Google Calendar.',
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  }
 
   String _waterKeyForDate(DateTime d) {
     final monthStr = d.month.toString().padLeft(2, '0');
@@ -195,6 +235,9 @@ class DashboardController extends GetxController {
     nextUp.value = _builder.nextUp(items, DateTime.now());
     await _loadWaterTracker(targetDay);
     await _loadExercisePlan(targetDay);
+    final gEvents = await GoogleCalendarService.fetchEventsForDay(targetDay);
+    googleCalendarEvents.assignAll(gEvents);
+    isGoogleCalendarConnected.value = GoogleCalendarService.currentUser != null;
 
     debugPrint('[DATE HISTORY] Filtered Records: ${items.length}');
     debugPrint('[HISTORY] RECORDS FOUND: ${items.length}');
