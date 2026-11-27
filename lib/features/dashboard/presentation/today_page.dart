@@ -212,7 +212,7 @@ class _TodayPageState extends State<TodayPage> {
                             skipLabel: l.skip,
                             missedLabel: l.missed,
                             isActionable: true,
-                            isConfirmed: false,
+                            isConfirmed: isConfirmed,
                             onTaken: () => _showMathVerificationDialog(
                                   context: context,
                                   activityTitle: item.reminder.title,
