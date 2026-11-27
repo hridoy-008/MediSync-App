@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -217,20 +219,38 @@ class _TodayPageState extends State<TodayPage> {
                             isActionable: canAct,
                             isConfirmed: isConfirmed,
                             onTaken: canAct
-                                ? () =>
-                                    controller.act(item, ReminderAction.taken)
+                                ? () => _showMathVerificationDialog(
+                                      context: context,
+                                      actionName: l.taken,
+                                      color: colors.success,
+                                      isBangla: bangla,
+                                      onVerified: () => controller.act(
+                                          item, ReminderAction.taken),
+                                    )
                                 : null,
                             onSnooze: canAct
-                                ? () =>
-                                    controller.act(item, ReminderAction.snoozed)
+                                ? () => _showMathVerificationDialog(
+                                      context: context,
+                                      actionName: l.snooze,
+                                      color: colors.warning,
+                                      isBangla: bangla,
+                                      onVerified: () => controller.act(
+                                          item, ReminderAction.snoozed),
+                                    )
                                 : null,
                             onSkip: (canAct && !isWindowPassed)
                                 ? () =>
                                     controller.act(item, ReminderAction.skipped)
                                 : null,
                             onMissed: canAct
-                                ? () =>
-                                    controller.act(item, ReminderAction.missed)
+                                ? () => _showMathVerificationDialog(
+                                      context: context,
+                                      actionName: l.missed,
+                                      color: colors.danger,
+                                      isBangla: bangla,
+                                      onVerified: () => controller.act(
+                                          item, ReminderAction.missed),
+                                    )
                                 : null,
                             stockCount: item.reminder.stockCount,
                             isLowStock: item.reminder.isLowStock,
@@ -701,4 +721,131 @@ class _SummaryCard extends StatelessWidget {
     );
   }
 }
+
+Future<void> _showMathVerificationDialog({
+  required BuildContext context,
+  required String actionName,
+  required Color color,
+  required VoidCallback onVerified,
+  required bool isBangla,
+}) async {
+  final random = math.Random();
+  final a = random.nextInt(15) + 1;
+  final b = random.nextInt(15) + 1;
+  final correctAnswer = a + b;
+
+  final numA = BanglaNumerals.localize(a, isBangla: isBangla);
+  final numB = BanglaNumerals.localize(b, isBangla: isBangla);
+
+  final textController = TextEditingController();
+  String? errorText;
+
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+            title: Row(
+              children: [
+                Icon(Icons.calculate_outlined, color: color),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: Text(
+                    isBangla ? 'যাচাইকরণ গাণিতিক প্রশ্ন' : 'Math Verification',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isBangla
+                      ? '$actionName করার পূর্বে নিচের হিসাবটি নিশ্চিত করুন:'
+                      : 'Please solve this calculation to confirm $actionName:',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$numA + $numB = ?',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: color,
+                        ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: textController,
+                  keyboardType: TextInputType.number,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: isBangla ? 'উত্তর লিখুন' : 'Enter Answer',
+                    errorText: errorText,
+                    border: const OutlineInputBorder(),
+                  ),
+                  onSubmitted: (_) {
+                    final val = int.tryParse(
+                        BanglaNumerals.toWestern(textController.text.trim()));
+                    if (val == correctAnswer) {
+                      Navigator.of(dialogContext).pop();
+                      onVerified();
+                    } else {
+                      setState(() {
+                        errorText = isBangla
+                            ? 'ভুল উত্তর, আবার চেষ্টা করুন!'
+                            : 'Incorrect answer, try again!';
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(isBangla ? 'বাতিল' : 'Cancel'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: color),
+                onPressed: () {
+                  final val = int.tryParse(
+                      BanglaNumerals.toWestern(textController.text.trim()));
+                  if (val == correctAnswer) {
+                    Navigator.of(dialogContext).pop();
+                    onVerified();
+                  } else {
+                    setState(() {
+                      errorText = isBangla
+                          ? 'ভুল উত্তর, আবার চেষ্টা করুন!'
+                          : 'Incorrect answer, try again!';
+                    });
+                  }
+                },
+                child: Text(
+                  isBangla ? 'নিশ্চিত করুন' : 'Confirm',
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
 
