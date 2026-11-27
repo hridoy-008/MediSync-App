@@ -224,6 +224,33 @@ class ActivityHistoryController extends GetxController {
             }
           }
         }
+
+        final exerciseKey = 'exercise_completed_${d.year}-$monthStr-$dayStr';
+        final dynamic rawEx = LocalStore.instance.singletons.get(exerciseKey);
+        if (rawEx != null) {
+          List<String> completedList = [];
+          if (rawEx is List) {
+            completedList = rawEx.map((e) => e.toString()).toList();
+          } else if (rawEx is Map && rawEx['completed'] is List) {
+            completedList = (rawEx['completed'] as List)
+                .map((e) => e.toString())
+                .toList();
+          }
+
+          for (final exerciseName in completedList) {
+            final dateStart = DateTime(d.year, d.month, d.day);
+            final exerciseTimestamp =
+                DateTime(dateStart.year, dateStart.month, dateStart.day, 18, 30);
+            entries.add(ActivityEntry(
+              id: 'exercise_${d.year}-$monthStr-$dayStr_$exerciseName',
+              category: ActivityCategory.exercise,
+              title: exerciseName,
+              subtitle: 'Exercise completed',
+              timestamp: exerciseTimestamp,
+              status: ActivityStatus.completed,
+            ));
+          }
+        }
       }
     }
 
