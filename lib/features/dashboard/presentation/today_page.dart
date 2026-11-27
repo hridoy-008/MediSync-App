@@ -1233,17 +1233,23 @@ class _GoogleCalendarCard extends GetView<DashboardController> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.event_note, color: Colors.blue, size: 22),
-                    const SizedBox(width: AppSpacing.xs),
-                    Text(
-                      bangla
-                          ? 'গুগল ক্যালেন্ডার ইভেন্ট'
-                          : 'Google Calendar Events',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ],
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Icon(Icons.event_note, color: Colors.blue, size: 22),
+                      const SizedBox(width: AppSpacing.xs),
+                      Expanded(
+                        child: Text(
+                          bangla
+                              ? 'গুগল ক্যালেন্ডার ইভেন্ট'
+                              : 'Google Calendar Events',
+                          style: Theme.of(context).textTheme.titleMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 Row(
                   mainAxisSize: MainAxisSize.min,

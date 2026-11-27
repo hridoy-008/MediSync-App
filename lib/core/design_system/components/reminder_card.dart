@@ -729,14 +729,18 @@ class _DietOptionsSelectorState extends State<_DietOptionsSelector> {
               Icon(Icons.restaurant_menu_rounded,
                   size: 16, color: colors.primary),
               const SizedBox(width: 6),
-              Text(
-                widget.isBangla
-                    ? 'ডায়েট বিকল্প (Weekly Options):'
-                    : 'Diet Options (Weekly Options):',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colors.primary,
-                    ),
+              Expanded(
+                child: Text(
+                  widget.isBangla
+                      ? 'ডায়েট বিকল্প (Weekly Options):'
+                      : 'Diet Options (Weekly Options):',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colors.primary,
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
