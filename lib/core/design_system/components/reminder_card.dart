@@ -313,7 +313,7 @@ class ReminderCard extends StatelessWidget {
                       onTap: onTaken,
                     ),
                   ),
-                if (onSnooze != null) ...[
+                if (onSnooze != null || !isActionable) ...[
                   if (onTaken != null || !isActionable)
                     const SizedBox(width: AppSpacing.xs),
                   Expanded(
@@ -321,7 +321,7 @@ class ReminderCard extends StatelessWidget {
                       label: snoozeLabel ?? 'Snooze',
                       icon: Icons.snooze,
                       color: colors.warning,
-                      enabled: isActionable,
+                      enabled: isActionable && onSnooze != null,
                       onTap: onSnooze,
                     ),
                   ),

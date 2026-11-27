@@ -5,6 +5,7 @@ import '../../../core/design_system/design_system.dart';
 import '../../../core/localization/l10n.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/routing/app_routes.dart';
+import '../../../core/utils/bangla_numerals.dart';
 import '../../../core/utils/time_format.dart';
 import '../../../domain/enums.dart';
 import '../../reminders/presentation/meal_edit_sheet.dart';
@@ -51,6 +52,7 @@ class _TodayPageState extends State<TodayPage> {
             controller: _scrollController,
             slivers: [
               SliverToBoxAdapter(child: _Header(bangla: bangla)),
+              SliverToBoxAdapter(child: _StatusSummarySection(bangla: bangla)),
               if (items.isEmpty)
                 SliverToBoxAdapter(
                   child: Padding(
@@ -218,7 +220,7 @@ class _TodayPageState extends State<TodayPage> {
                                 ? () =>
                                     controller.act(item, ReminderAction.taken)
                                 : null,
-                            onSnooze: (canAct && !isWindowPassed)
+                            onSnooze: canAct
                                 ? () =>
                                     controller.act(item, ReminderAction.snoozed)
                                 : null,
@@ -577,3 +579,126 @@ class _CurrentTimeIndicator extends StatelessWidget {
     );
   }
 }
+
+class _StatusSummarySection extends StatelessWidget {
+  const _StatusSummarySection({required this.bangla});
+  final bool bangla;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = Get.find<DashboardController>();
+    final l = context.l10n;
+    final colors = context.colors;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
+      child: Obx(() {
+        final taken = controller.takenCount.value;
+        final missed = controller.missedCount.value;
+        final snoozed = controller.snoozedCount.value;
+
+        return Row(
+          children: [
+            Expanded(
+              child: _SummaryCard(
+                icon: Icons.check_circle_outline,
+                label: l.taken,
+                count: taken,
+                color: colors.success,
+                bangla: bangla,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Expanded(
+              child: _SummaryCard(
+                icon: Icons.cancel_outlined,
+                label: l.missed,
+                count: missed,
+                color: colors.danger,
+                bangla: bangla,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Expanded(
+              child: _SummaryCard(
+                icon: Icons.snooze,
+                label: l.snooze,
+                count: snoozed,
+                color: colors.warning,
+                bangla: bangla,
+              ),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+}
+
+class _SummaryCard extends StatelessWidget {
+  const _SummaryCard({
+    required this.icon,
+    required this.label,
+    required this.count,
+    required this.color,
+    required this.bangla,
+  });
+
+  final IconData icon;
+  final String label;
+  final int count;
+  final Color color;
+  final bool bangla;
+
+  @override
+  Widget build(BuildContext context) {
+    final countStr = BanglaNumerals.localize(count, isBangla: bangla);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        vertical: AppSpacing.sm,
+        horizontal: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: color.withOpacity(0.25),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: color),
+              const SizedBox(width: 4),
+              Text(
+                countStr,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

@@ -41,6 +41,9 @@ class DashboardController extends GetxController {
   final profile = const UserProfile(id: 'me').obs;
   final doneCount = 0.obs;
   final totalCount = 0.obs;
+  final takenCount = 0.obs;
+  final missedCount = 0.obs;
+  final snoozedCount = 0.obs;
   final Rxn<TimelineItem> nextUp = Rxn<TimelineItem>();
   final logs = <ReminderLog>[].obs;
   final currentTime = DateTime.now().obs;
@@ -157,6 +160,9 @@ class DashboardController extends GetxController {
     final a = _builder.adherence(items);
     doneCount.value = a.done;
     totalCount.value = a.total;
+    takenCount.value = items.where((i) => i.status == ReminderStatus.taken).length;
+    missedCount.value = items.where((i) => i.status == ReminderStatus.missed).length;
+    snoozedCount.value = items.where((i) => i.status == ReminderStatus.snoozed).length;
     nextUp.value = _builder.nextUp(items, DateTime.now());
     await _loadWaterTracker(targetDay);
 
