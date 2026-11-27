@@ -83,7 +83,9 @@ class DashboardController extends GetxController {
     final success = await GoogleCalendarService.signIn();
     if (success) {
       isGoogleCalendarConnected.value = true;
-      await loadDate();
+      final gEvents =
+          await GoogleCalendarService.fetchEventsForDay(selectedDate.value);
+      googleCalendarEvents.assignAll(gEvents);
       Get.snackbar(
         'Google Calendar',
         'Successfully connected to Google Calendar!',
@@ -106,7 +108,6 @@ class DashboardController extends GetxController {
     await GoogleCalendarService.signOut();
     isGoogleCalendarConnected.value = false;
     googleCalendarEvents.clear();
-    await loadDate();
     Get.snackbar(
       'Google Calendar',
       'Disconnected from Google Calendar.',
