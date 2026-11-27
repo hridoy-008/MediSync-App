@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../../../core/data/local_store.dart';
+import '../../../core/localization/locale_controller.dart';
 import '../../../core/utils/logger.dart';
 import '../../../domain/entities/plan.dart';
 import '../../../domain/entities/reminder.dart';
@@ -294,7 +295,7 @@ class ActivityHistoryController extends GetxController {
             final exerciseTimestamp =
                 DateTime(dateStart.year, dateStart.month, dateStart.day, 18, 30);
             entries.add(ActivityEntry(
-              id: 'exercise_completed_${d.year}-$monthStr-$dayStr_$exerciseName',
+              id: 'exercise_completed_${d.year}-$monthStr-$dayStr-$exerciseName',
               category: ActivityCategory.exercise,
               title: exerciseName,
               subtitle: '${exerciseItem.durationMins} min - Exercise completed',
@@ -306,7 +307,7 @@ class ActivityHistoryController extends GetxController {
             final exerciseTimestamp =
                 DateTime(dateStart.year, dateStart.month, dateStart.day, 18, 30);
             entries.add(ActivityEntry(
-              id: 'exercise_missed_${d.year}-$monthStr-$dayStr_$exerciseName',
+              id: 'exercise_missed_${d.year}-$monthStr-$dayStr-$exerciseName',
               category: ActivityCategory.exercise,
               title: exerciseName,
               subtitle: '${exerciseItem.durationMins} min - Missed',
