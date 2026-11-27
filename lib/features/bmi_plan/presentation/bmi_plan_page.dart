@@ -242,87 +242,152 @@ class _DietSectionState extends State<_DietSection> {
             ],
             ...diet.meals.map((m) {
               final selectedIdx = _selectedOptions[m.label] ?? 0;
-              final currentOption = m.options.isNotEmpty
-                  ? m.options[selectedIdx.clamp(0, m.options.length - 1)]
-                  : null;
 
               return Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                 child: AppCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+                          Icon(Icons.restaurant_rounded,
+                              size: 18, color: context.colors.primary),
+                          const SizedBox(width: 8),
                           Text(
                             m.label,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
-                          if (m.options.length > 1)
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: List.generate(m.options.length, (i) {
-                                final isSelected = i == selectedIdx;
-                                return Padding(
-                                  padding: const EdgeInsets.only(left: 4),
-                                  child: InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        _selectedOptions[m.label] = i;
-                                      });
-                                    },
-                                    borderRadius: BorderRadius.circular(4),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? context.colors.primary
-                                            : context.colors.surfaceVariant,
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        'Opt ${i + 1}',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      ...List.generate(m.options.length, (i) {
+                        final option = m.options[i];
+                        final isSelected = i == selectedIdx;
+
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeInOut,
+                          margin: const EdgeInsets.only(bottom: 6),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? context.colors.primary.withOpacity(0.1)
+                                : context.colors.surface,
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            border: Border.all(
+                              color: isSelected
+                                  ? context.colors.primary
+                                  : context.colors.outline.withOpacity(0.3),
+                              width: isSelected ? 1.5 : 1,
+                            ),
+                          ),
+                          child: InkWell(
+                            onTap: () {
+                              setState(() {
+                                _selectedOptions[m.label] = i;
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            child: Padding(
+                              padding: const EdgeInsets.all(AppSpacing.sm),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      AnimatedRotation(
+                                        turns: isSelected ? 0.05 : 0.0,
+                                        duration:
+                                            const Duration(milliseconds: 200),
+                                        child: Icon(
+                                          isSelected
+                                              ? Icons.stars_rounded
+                                              : Icons.circle_outlined,
+                                          size: 16,
                                           color: isSelected
-                                              ? Colors.white
-                                              : context.colors.onSurface,
+                                              ? context.colors.primary
+                                              : context.colors.onSurfaceMuted,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          'Option ${i + 1}: ${option.title}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color: isSelected
+                                                    ? context.colors.primary
+                                                    : context.colors.onSurface,
+                                              ),
+                                        ),
+                                      ),
+                                      if (isSelected)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: context.colors.primary,
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                          ),
+                                          child: const Text(
+                                            'Selected',
+                                            style: TextStyle(
+                                              fontSize: 9,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  if (isSelected) ...[
+                                    const SizedBox(height: 6),
+                                    ...option.items.map(
+                                      (item) => Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 22, bottom: 2),
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text('• ',
+                                                style: TextStyle(
+                                                    color: context
+                                                        .colors.primary,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                            Expanded(
+                                              child: Text(
+                                                item,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodySmall
+                                                    ?.copyWith(
+                                                      color: context
+                                                          .colors.onSurface,
+                                                    ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ),
-                                  ),
-                                );
-                              }),
-                            ),
-                        ],
-                      ),
-                      if (currentOption != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          currentOption.title,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: context.colors.primary,
+                                  ],
+                                ],
                               ),
-                        ),
-                        const SizedBox(height: 4),
-                        ...currentOption.items.map(
-                          (i) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 2),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('• '),
-                                Expanded(child: Text(i)),
-                              ],
                             ),
                           ),
-                        ),
-                      ],
+                        );
+                      }),
                     ],
+                  ),
+                ),
+              );
+            }),
                   ),
                 ),
               );
