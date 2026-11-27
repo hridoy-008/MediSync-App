@@ -1,9 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/data/local_store.dart';
+import '../../../core/design_system/app_theme.dart';
+import '../../../core/design_system/tokens.dart';
+import '../../../core/localization/locale_controller.dart';
+import '../../../core/utils/motivational_messages.dart';
 import '../../../domain/entities/configs.dart';
 import '../../../domain/entities/reminder.dart';
 import '../../../domain/entities/user_profile.dart';
@@ -231,6 +236,28 @@ class DashboardController extends GetxController {
       action: action,
     );
     await loadDate();
+
+    if (action == ReminderAction.taken) {
+      final isBangla = Get.isRegistered<LocaleController>() &&
+          Get.find<LocaleController>().isBangla;
+      final msg = getMotivationalMessage(
+        activityTitle: item.reminder.title,
+        status: ReminderStatus.taken,
+        isBangla: isBangla,
+      );
+      if (msg.isNotEmpty) {
+        final successColor = Get.theme.extension<AppColors>()?.success ?? const Color(0xFF2E9E5B);
+        Get.snackbar(
+          isBangla ? 'গৃহীত' : 'Taken',
+          msg,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: successColor,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 4),
+          margin: const EdgeInsets.all(AppSpacing.md),
+        );
+      }
+    }
   }
 
   Future<void> updateMeal(MealConfig updatedMeal) async {

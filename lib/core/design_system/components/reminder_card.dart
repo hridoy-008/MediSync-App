@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/enums.dart';
 import '../../localization/l10n.dart';
+import '../../utils/motivational_messages.dart';
 import '../app_theme.dart';
 import '../reminder_visuals.dart';
 import '../tokens.dart';
@@ -294,6 +295,42 @@ class ReminderCard extends StatelessWidget {
             ),
           ],
           if (mealDetails != null) mealDetails!,
+          () {
+            final motivationalMsg = getMotivationalMessage(
+              activityTitle: title,
+              status: status,
+              isBangla: isBangla,
+            );
+            if (motivationalMsg.isEmpty) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.xs + 2,
+                ),
+                decoration: BoxDecoration(
+                  color: statusColor != null
+                      ? statusColor!.withOpacity(0.08)
+                      : accent.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(
+                    color: statusColor != null
+                        ? statusColor!.withOpacity(0.25)
+                        : accent.withOpacity(0.25),
+                  ),
+                ),
+                child: Text(
+                  motivationalMsg,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: statusColor ?? colors.onSurface,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+              ),
+            );
+          }(),
           if (!isConfirmed &&
               (onTaken != null ||
                   onMissed != null ||

@@ -8,6 +8,7 @@ import '../../../core/localization/l10n.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/utils/bangla_numerals.dart';
+import '../../../core/utils/motivational_messages.dart';
 import '../../../core/utils/time_format.dart';
 import '../../../domain/enums.dart';
 import '../../reminders/presentation/meal_edit_sheet.dart';
@@ -219,18 +220,16 @@ class _TodayPageState extends State<TodayPage> {
                             isActionable: canAct,
                             isConfirmed: isConfirmed,
                             onTaken: canAct
-                                ? () => _showMathVerificationDialog(
-                                      context: context,
-                                      actionName: l.taken,
-                                      color: colors.success,
-                                      isBangla: bangla,
-                                      onVerified: () => controller.act(
-                                          item, ReminderAction.taken),
+                                ? () => controller.act(
+                                      item,
+                                      ReminderAction.taken,
                                     )
                                 : null,
                             onSnooze: canAct
                                 ? () => _showMathVerificationDialog(
                                       context: context,
+                                      activityTitle: item.reminder.title,
+                                      targetStatus: ReminderStatus.snoozed,
                                       actionName: l.snooze,
                                       color: colors.warning,
                                       isBangla: bangla,
@@ -245,6 +244,8 @@ class _TodayPageState extends State<TodayPage> {
                             onMissed: canAct
                                 ? () => _showMathVerificationDialog(
                                       context: context,
+                                      activityTitle: item.reminder.title,
+                                      targetStatus: ReminderStatus.missed,
                                       actionName: l.missed,
                                       color: colors.danger,
                                       isBangla: bangla,
@@ -724,6 +725,8 @@ class _SummaryCard extends StatelessWidget {
 
 Future<void> _showMathVerificationDialog({
   required BuildContext context,
+  required String activityTitle,
+  required ReminderStatus targetStatus,
   required String actionName,
   required Color color,
   required VoidCallback onVerified,
@@ -739,6 +742,35 @@ Future<void> _showMathVerificationDialog({
 
   final textController = TextEditingController();
   String? errorText;
+
+  void confirmAction(BuildContext dialogContext) {
+    final val = int.tryParse(
+        BanglaNumerals.toWestern(textController.text.trim()));
+    if (val == correctAnswer) {
+      Navigator.of(dialogContext).pop();
+      onVerified();
+      final msg = getMotivationalMessage(
+        activityTitle: activityTitle,
+        status: targetStatus,
+        isBangla: isBangla,
+      );
+      if (msg.isNotEmpty) {
+        Get.snackbar(
+          actionName,
+          msg,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: color,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 4),
+          margin: const EdgeInsets.all(AppSpacing.md),
+        );
+      }
+    } else {
+      errorText = isBangla
+          ? 'ভুল উত্তর, আবার চেষ্টা করুন!'
+          : 'Incorrect answer, try again!';
+    }
+  }
 
   await showDialog<void>(
     context: context,
@@ -798,18 +830,9 @@ Future<void> _showMathVerificationDialog({
                     border: const OutlineInputBorder(),
                   ),
                   onSubmitted: (_) {
-                    final val = int.tryParse(
-                        BanglaNumerals.toWestern(textController.text.trim()));
-                    if (val == correctAnswer) {
-                      Navigator.of(dialogContext).pop();
-                      onVerified();
-                    } else {
-                      setState(() {
-                        errorText = isBangla
-                            ? 'ভুল উত্তর, আবার চেষ্টা করুন!'
-                            : 'Incorrect answer, try again!';
-                      });
-                    }
+                    setState(() {
+                      confirmAction(dialogContext);
+                    });
                   },
                 ),
               ],
@@ -822,18 +845,9 @@ Future<void> _showMathVerificationDialog({
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: color),
                 onPressed: () {
-                  final val = int.tryParse(
-                      BanglaNumerals.toWestern(textController.text.trim()));
-                  if (val == correctAnswer) {
-                    Navigator.of(dialogContext).pop();
-                    onVerified();
-                  } else {
-                    setState(() {
-                      errorText = isBangla
-                          ? 'ভুল উত্তর, আবার চেষ্টা করুন!'
-                          : 'Incorrect answer, try again!';
-                    });
-                  }
+                  setState(() {
+                    confirmAction(dialogContext);
+                  });
                 },
                 child: Text(
                   isBangla ? 'নিশ্চিত করুন' : 'Confirm',
