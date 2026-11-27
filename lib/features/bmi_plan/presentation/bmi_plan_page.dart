@@ -126,6 +126,7 @@ class _DietSection extends StatefulWidget {
 class _DietSectionState extends State<_DietSection> {
   final controller = Get.find<BmiPlanController>();
   bool _isExpanded = false;
+  final Map<String, int> _selectedOptions = {};
 
   @override
   Widget build(BuildContext context) {
@@ -239,35 +240,77 @@ class _DietSectionState extends State<_DietSection> {
               ),
               const SizedBox(height: AppSpacing.xs),
             ],
-            ...diet.meals.map(
-              (m) => Padding(
+            ...diet.meals.map((m) {
+              final selectedIdx = _selectedOptions[m.label] ?? 0;
+              final currentOption = m.options.isNotEmpty
+                  ? m.options[selectedIdx.clamp(0, m.options.length - 1)]
+                  : null;
+
+              return Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.xs),
                 child: AppCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        m.label,
-                        style: Theme.of(context).textTheme.titleMedium,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            m.label,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          if (m.options.length > 1)
+                            ToggleButtons(
+                              isDense: true,
+                              constraints: const BoxConstraints(
+                                  minHeight: 28, minWidth: 32),
+                              isSelected: List.generate(
+                                  m.options.length, (i) => i == selectedIdx),
+                              onPressed: (index) {
+                                setState(() {
+                                  _selectedOptions[m.label] = index;
+                                });
+                              },
+                              children: List.generate(
+                                m.options.length,
+                                (i) => Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
+                                  child: Text('${i + 1}',
+                                      style: const TextStyle(fontSize: 12)),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      ...m.items.map(
-                        (i) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('• '),
-                              Expanded(child: Text(i)),
-                            ],
+                      if (currentOption != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          currentOption.title,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: context.colors.primary,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        ...currentOption.items.map(
+                          (i) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('• '),
+                                Expanded(child: Text(i)),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
-              ),
-            ),
+              );
+            }),
           ],
         ],
       );

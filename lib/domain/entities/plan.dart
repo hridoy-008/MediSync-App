@@ -70,19 +70,54 @@ class DietPlan extends Equatable {
 }
 
 class DietMeal extends Equatable {
-  const DietMeal({required this.label, required this.items});
+  const DietMeal({required this.label, required this.options});
   final String label;
+  final List<DietMealOption> options;
+
+  Map<String, dynamic> toMap() => {
+        'label': label,
+        'options': options.map((e) => e.toMap()).toList(),
+      };
+
+  factory DietMeal.fromMap(Map<String, dynamic> m) {
+    if (m['options'] != null) {
+      return DietMeal(
+        label: m['label'] as String? ?? '',
+        options: (m['options'] as List?)
+                ?.map((e) =>
+                    DietMealOption.fromMap(Map<String, dynamic>.from(e as Map)))
+                .toList() ??
+            const [],
+      );
+    } else {
+      final legacyItems =
+          (m['items'] as List?)?.map((e) => e.toString()).toList() ?? const [];
+      return DietMeal(
+        label: m['label'] as String? ?? '',
+        options: [DietMealOption(title: 'Option 1', items: legacyItems)],
+      );
+    }
+  }
+
+  @override
+  List<Object?> get props => [label, options];
+}
+
+class DietMealOption extends Equatable {
+  const DietMealOption({required this.title, required this.items});
+  final String title;
   final List<String> items;
 
-  Map<String, dynamic> toMap() => {'label': label, 'items': items};
-  factory DietMeal.fromMap(Map<String, dynamic> m) => DietMeal(
-        label: m['label'] as String? ?? '',
+  Map<String, dynamic> toMap() => {'title': title, 'items': items};
+
+  factory DietMealOption.fromMap(Map<String, dynamic> m) => DietMealOption(
+        title: m['title'] as String? ?? '',
         items: (m['items'] as List?)?.map((e) => e.toString()).toList() ??
             const [],
       );
 
   @override
-  List<Object?> get props => [label, items];
+  List<Object?> get props => [title, items];
 }
 
 class ExercisePlan extends Equatable {
