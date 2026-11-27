@@ -8,6 +8,7 @@ import '../../../core/localization/l10n.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/utils/bangla_numerals.dart';
+import '../../../core/utils/calendar_helper.dart';
 import '../../../core/utils/motivational_messages.dart';
 import '../../../core/utils/time_format.dart';
 import '../../../domain/enums.dart';
@@ -1072,6 +1073,14 @@ void _showEditActionSheet({
               },
             ),
             const Divider(),
+            ListTile(
+              leading: Icon(Icons.calendar_month, color: colors.primary),
+              title: Text(isBangla ? 'গুগল ক্যালেন্ডারে যোগ করুন' : 'Add to Google Calendar'),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                CalendarHelper.addReminderToCalendar(item.reminder, item.scheduledTime);
+              },
+            ),
             ListTile(
               leading: Icon(Icons.refresh, color: colors.primary),
               title: Text(isBangla ? 'রিসেট করুন (Pending-এ ফেরান)' : 'Reset to Pending'),
