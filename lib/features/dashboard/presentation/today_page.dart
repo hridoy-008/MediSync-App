@@ -198,9 +198,15 @@ class _TodayPageState extends State<TodayPage> {
                             missedLabel: l.missed,
                             isActionable: true,
                             isConfirmed: false,
-                            onTaken: () => controller.act(
-                                  item,
-                                  ReminderAction.taken,
+                            onTaken: () => _showMathVerificationDialog(
+                                  context: context,
+                                  activityTitle: item.reminder.title,
+                                  targetStatus: ReminderStatus.taken,
+                                  actionName: l.taken,
+                                  color: colors.success,
+                                  isBangla: bangla,
+                                  onVerified: () => controller.act(
+                                      item, ReminderAction.taken),
                                 ),
                             onSnooze: () => _showMathVerificationDialog(
                                   context: context,
@@ -212,8 +218,16 @@ class _TodayPageState extends State<TodayPage> {
                                   onVerified: () => controller.act(
                                       item, ReminderAction.snoozed),
                                 ),
-                            onSkip: () =>
-                                controller.act(item, ReminderAction.skipped),
+                            onSkip: () => _showMathVerificationDialog(
+                                  context: context,
+                                  activityTitle: item.reminder.title,
+                                  targetStatus: ReminderStatus.skipped,
+                                  actionName: l.skip,
+                                  color: colors.onSurfaceMuted,
+                                  isBangla: bangla,
+                                  onVerified: () => controller.act(
+                                      item, ReminderAction.skipped),
+                                ),
                             onMissed: () => _showMathVerificationDialog(
                                   context: context,
                                   activityTitle: item.reminder.title,

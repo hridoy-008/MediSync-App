@@ -232,26 +232,42 @@ class DashboardController extends GetxController {
     );
     await loadDate();
 
-    if (action == ReminderAction.taken) {
-      final isBangla = Get.isRegistered<LocaleController>() &&
-          Get.find<LocaleController>().isBangla;
-      final msg = getMotivationalMessage(
-        activityTitle: item.reminder.title,
-        status: ReminderStatus.taken,
-        isBangla: isBangla,
+    final status = switch (action) {
+      ReminderAction.taken => ReminderStatus.taken,
+      ReminderAction.snoozed => ReminderStatus.snoozed,
+      ReminderAction.skipped => ReminderStatus.skipped,
+      ReminderAction.missed => ReminderStatus.missed,
+    };
+
+    final isBangla = Get.isRegistered<LocaleController>() &&
+        Get.find<LocaleController>().isBangla;
+    final msg = getMotivationalMessage(
+      activityTitle: item.reminder.title,
+      status: status,
+      isBangla: isBangla,
+    );
+    if (msg.isNotEmpty) {
+      final successColor = switch (action) {
+        ReminderAction.taken => Get.theme.extension<AppColors>()?.success ?? const Color(0xFF2E9E5B),
+        ReminderAction.snoozed => Get.theme.extension<AppColors>()?.warning ?? const Color(0xFFE2A13B),
+        ReminderAction.skipped => Get.theme.extension<AppColors>()?.onSurfaceMuted ?? const Color(0xFF707070),
+        ReminderAction.missed => Get.theme.extension<AppColors>()?.danger ?? const Color(0xFFD32F2F),
+      };
+      final actionTitle = switch (action) {
+        ReminderAction.taken => isBangla ? 'গৃহীত' : 'Taken',
+        ReminderAction.snoozed => isBangla ? 'স্নুজ' : 'Snoozed',
+        ReminderAction.skipped => isBangla ? 'বাদ' : 'Skipped',
+        ReminderAction.missed => isBangla ? 'মিসড' : 'Missed',
+      };
+      Get.snackbar(
+        actionTitle,
+        msg,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: successColor,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4),
+        margin: const EdgeInsets.all(AppSpacing.md),
       );
-      if (msg.isNotEmpty) {
-        final successColor = Get.theme.extension<AppColors>()?.success ?? const Color(0xFF2E9E5B);
-        Get.snackbar(
-          isBangla ? 'গৃহীত' : 'Taken',
-          msg,
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: successColor,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 4),
-          margin: const EdgeInsets.all(AppSpacing.md),
-        );
-      }
     }
   }
 
