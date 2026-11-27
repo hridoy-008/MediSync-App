@@ -6,8 +6,6 @@ String getMotivationalMessage({
   required ReminderStatus status,
   required bool isBangla,
 }) {
-  final titleLower = activityTitle.toLowerCase();
-
   if (status == ReminderStatus.taken) {
     if (isBangla) {
       return '🎉 দারুণ কাজ! আপনি আপনার স্বাস্থ্যকর অভ্যাসে সঠিক পথে আছেন।';
