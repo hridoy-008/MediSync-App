@@ -130,30 +130,8 @@ class _TodayPageState extends State<TodayPage> {
                         }
                       }
 
-                      final isConfirmed = effectiveStatus == ReminderStatus.taken ||
-                          (effectiveStatus == ReminderStatus.missed &&
-                              (!isMeal || hasUserConfirmedAction)) ||
-                          effectiveStatus == ReminderStatus.snoozed ||
-                          effectiveStatus == ReminderStatus.skipped ||
-                          controller.logs.any((l) {
-                            if (isMeal &&
-                                (l.status == ReminderStatus.missed ||
-                                    l.action == ReminderAction.missed) &&
-                                l.confirmedAt == null) {
-                              return false;
-                            }
-                            final lt =
-                                (l.confirmedAt ?? l.scheduledTime).toLocal();
-                            final st = item.scheduledTime.toLocal();
-                            return l.reminderId == item.reminder.id &&
-                                lt.year == st.year &&
-                                lt.month == st.month &&
-                                lt.day == st.day &&
-                                (l.confirmedAt != null ||
-                                    l.status == ReminderStatus.taken);
-                          });
-                      final isDue = true; // Unlocked for testing all sections (Upcoming, Due, etc.)
-                      final canAct = isToday && !isConfirmed;
+                      final isConfirmed = false; // Always show action buttons for testing
+                      final canAct = true; // Always actionable for testing
 
                       String? statusLabel;
                       Color? statusColor;
