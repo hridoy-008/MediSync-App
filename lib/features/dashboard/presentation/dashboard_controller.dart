@@ -22,6 +22,7 @@ import '../../reminders/application/reminder_service.dart';
 import '../../reminders/domain/timeline_builder.dart';
 import '../../reminders/domain/timeline_item.dart';
 import '../../reminders/presentation/reminder_settings_controller.dart';
+import 'activity_history_controller.dart';
 
 class DashboardController extends GetxController {
   DashboardController({
@@ -291,6 +292,9 @@ class DashboardController extends GetxController {
         _exerciseKeyForDate(selectedDate.value),
         {'completed': completedExercises.toList()},
       );
+    }
+    if (Get.isRegistered<ActivityHistoryController>()) {
+      Get.find<ActivityHistoryController>().loadLogs();
     }
   }
 
