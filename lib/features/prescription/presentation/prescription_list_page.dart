@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -176,11 +178,40 @@ class _PrescriptionTileState extends State<_PrescriptionTile> {
         FoodTiming.anyTime => l.timingAnyTime,
       };
 
+  void _showFullScreenImage(BuildContext context, String path) {
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                child: Image.file(File(path)),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              right: 20,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                onPressed: Get.back,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
     final date = widget.prescription.capturedAt;
     final count = widget.prescription.medicines.length;
+    final imagePath = widget.prescription.imagePath;
+    final hasImage =
+        imagePath != null && imagePath.isNotEmpty && File(imagePath).existsSync();
 
     return AppCard(
       child: Column(
@@ -195,8 +226,19 @@ class _PrescriptionTileState extends State<_PrescriptionTile> {
                   color: context.colors.primaryContainer,
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                child: Icon(Icons.description_outlined,
-                    color: context.colors.primary),
+                child: hasImage
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        child: InkWell(
+                          onTap: () => _showFullScreenImage(context, imagePath),
+                          child: Image.file(
+                            File(imagePath),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      )
+                    : Icon(Icons.description_outlined,
+                        color: context.colors.primary),
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
@@ -244,6 +286,21 @@ class _PrescriptionTileState extends State<_PrescriptionTile> {
             const SizedBox(height: AppSpacing.sm),
             const Divider(height: 1),
             const SizedBox(height: AppSpacing.sm),
+            if (hasImage) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                child: InkWell(
+                  onTap: () => _showFullScreenImage(context, imagePath),
+                  child: Image.file(
+                    File(imagePath),
+                    height: 160,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
             if (widget.prescription.medicines.isNotEmpty) ...[
               Text(
                 l.sectionMedicines,
