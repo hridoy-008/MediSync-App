@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../../../domain/entities/plan.dart';
 import '../../../domain/enums.dart';
 import '../../localization/l10n.dart';
 import '../../utils/motivational_messages.dart';
@@ -44,6 +45,7 @@ class ReminderCard extends StatelessWidget {
     this.description,
     this.onEdit,
     this.isBangla = false,
+    this.dietMealOptions,
   });
 
   final ReminderType type;
@@ -67,6 +69,7 @@ class ReminderCard extends StatelessWidget {
   final int? stockCount;
   final bool isLowStock;
   final Widget? mealDetails;
+  final List<DietMealOption>? dietMealOptions;
   final int? completedCount;
   final int? targetCount;
   final VoidCallback? onIncrement;
@@ -294,6 +297,9 @@ class ReminderCard extends StatelessWidget {
               ),
             ),
           ],
+          if (dietMealOptions != null && dietMealOptions!.isNotEmpty)
+            _DietOptionsSelector(
+                options: dietMealOptions!, isBangla: isBangla),
           if (mealDetails != null) mealDetails!,
           () {
             final motivationalMsg = getMotivationalMessage(
@@ -682,6 +688,117 @@ class _QuickAction extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _DietOptionsSelector extends StatefulWidget {
+  const _DietOptionsSelector({
+    required this.options,
+    required this.isBangla,
+  });
+
+  final List<DietMealOption> options;
+  final bool isBangla;
+
+  @override
+  State<_DietOptionsSelector> createState() => _DietOptionsSelectorState();
+}
+
+class _DietOptionsSelectorState extends State<_DietOptionsSelector> {
+  int _selectedIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final currentOption =
+        widget.options[_selectedIndex.clamp(0, widget.options.length - 1)];
+
+    return Container(
+      margin: const EdgeInsets.only(top: AppSpacing.xs),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: colors.surfaceVariant.withOpacity(0.35),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                widget.isBangla
+                    ? 'ডায়েট বিকল্প (Weekly Options):'
+                    : 'Diet Options (Weekly Options):',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colors.primary,
+                    ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(widget.options.length, (i) {
+                  final isSelected = i == _selectedIndex;
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: InkWell(
+                      onTap: () => setState(() => _selectedIndex = i),
+                      borderRadius: BorderRadius.circular(4),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? colors.primary
+                              : colors.surfaceVariant,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'Opt ${i + 1}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected
+                                ? Colors.white
+                                : colors.onSurface,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            currentOption.title,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colors.primary,
+                ),
+          ),
+          const SizedBox(height: 2),
+          ...currentOption.items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('• '),
+                  Expanded(
+                    child: Text(
+                      item,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

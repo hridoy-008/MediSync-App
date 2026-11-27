@@ -165,6 +165,16 @@ class DashboardController extends GetxController {
     final allLogs = (await _reminders.getLogs()).valueOrNull ?? const [];
     final meals = (await _config.getMeals()).valueOrNull ?? const [];
 
+    DietPlan? dietPlan;
+    if (LocalStore.instance.isReady) {
+      final rawDiet = LocalStore.instance.singletons.get('diet_plan');
+      if (rawDiet != null) {
+        try {
+          dietPlan = DietPlan.fromMap(LocalStore.normalize(rawDiet));
+        } catch (_) {}
+      }
+    }
+
     logs.assignAll(allLogs);
     debugPrint('[DATE HISTORY] Total Activity Records: ${allLogs.length}');
 
@@ -173,6 +183,7 @@ class DashboardController extends GetxController {
       logs: allLogs,
       day: targetDay,
       meals: meals,
+      dietPlan: dietPlan,
     );
     timeline.assignAll(items);
     final a = _builder.adherence(items);

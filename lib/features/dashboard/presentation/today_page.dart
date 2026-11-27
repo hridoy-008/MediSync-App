@@ -269,6 +269,7 @@ class _TodayPageState extends State<TodayPage> {
                               linkedMedicineSummary: item.linkedMedicineSummary,
                               preMealSummary: item.preMealSummary,
                             ),
+                            dietMealOptions: item.dietMealOptions,
                             imagePath: item.mealImagePath,
                             recommendedFood: item.recommendedFood,
                             description: item.mealDescription,

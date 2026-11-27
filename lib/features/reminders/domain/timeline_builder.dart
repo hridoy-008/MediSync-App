@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 
 import '../../../core/utils/recurrence.dart';
 import '../../../domain/entities/configs.dart';
+import '../../../domain/entities/plan.dart';
 import '../../../domain/entities/reminder.dart';
 import '../../../domain/enums.dart';
 import 'timeline_item.dart';
@@ -16,6 +17,7 @@ class TimelineBuilder {
     required List<ReminderLog> logs,
     required DateTime day,
     List<MealConfig> meals = const [],
+    DietPlan? dietPlan,
   }) {
     final targetDay = DateTime(day.year, day.month, day.day);
     final dayStart = targetDay;
@@ -138,6 +140,16 @@ class TimelineBuilder {
           }
         }
 
+        List<DietMealOption>? dietMealOptions;
+        if (isMeal && dietPlan != null && dietPlan.meals.isNotEmpty) {
+          final matchedDietMeal = dietPlan.meals.firstWhereOrNull((dm) {
+            final dmLabel = dm.label.toLowerCase();
+            final rTitle = r.title.toLowerCase();
+            return dmLabel.contains(rTitle) || rTitle.contains(dmLabel);
+          }) ?? dietPlan.meals.firstOrNull;
+          dietMealOptions = matchedDietMeal?.options;
+        }
+
         items.add(TimelineItem(
           reminder: r,
           scheduledTime: t,
@@ -145,6 +157,7 @@ class TimelineBuilder {
           linkedMedicineSummary: linkedMedicineSummary,
           preMealSummary: preMealSummary,
           mealConfig: mealConfig,
+          dietMealOptions: dietMealOptions,
         ));
       }
     }
@@ -170,8 +183,17 @@ class TimelineBuilder {
           );
 
       MealConfig? mealConfig;
+      List<DietMealOption>? dietMealOptions;
       if (r.type == ReminderType.meal) {
         mealConfig = _findMeal(meals, r);
+        if (dietPlan != null && dietPlan.meals.isNotEmpty) {
+          final matchedDietMeal = dietPlan.meals.firstWhereOrNull((dm) {
+            final dmLabel = dm.label.toLowerCase();
+            final rTitle = r.title.toLowerCase();
+            return dmLabel.contains(rTitle) || rTitle.contains(dmLabel);
+          }) ?? dietPlan.meals.firstOrNull;
+          dietMealOptions = matchedDietMeal?.options;
+        }
       }
 
       items.add(TimelineItem(
@@ -179,6 +201,7 @@ class TimelineBuilder {
         scheduledTime: logTime,
         status: log.status,
         mealConfig: mealConfig,
+        dietMealOptions: dietMealOptions,
       ));
     }
 

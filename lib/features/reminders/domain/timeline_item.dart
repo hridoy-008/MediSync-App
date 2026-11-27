@@ -1,4 +1,5 @@
 import '../../../domain/entities/configs.dart';
+import '../../../domain/entities/plan.dart';
 import '../../../domain/entities/reminder.dart';
 import '../../../domain/enums.dart';
 
@@ -11,6 +12,7 @@ class TimelineItem {
     this.linkedMedicineSummary,
     this.preMealSummary,
     this.mealConfig,
+    this.dietMealOptions,
   });
 
   final Reminder reminder;
@@ -19,6 +21,7 @@ class TimelineItem {
   final String? linkedMedicineSummary;
   final String? preMealSummary;
   final MealConfig? mealConfig;
+  final List<DietMealOption>? dietMealOptions;
 
   ReminderType get type => reminder.type;
   bool get isPending => status == ReminderStatus.pending;
@@ -31,6 +34,7 @@ class TimelineItem {
     String? linkedMedicineSummary,
     String? preMealSummary,
     MealConfig? mealConfig,
+    List<DietMealOption>? dietMealOptions,
   }) =>
       TimelineItem(
         reminder: reminder,
@@ -40,5 +44,6 @@ class TimelineItem {
             linkedMedicineSummary ?? this.linkedMedicineSummary,
         preMealSummary: preMealSummary ?? this.preMealSummary,
         mealConfig: mealConfig ?? this.mealConfig,
+        dietMealOptions: dietMealOptions ?? this.dietMealOptions,
       );
 }
