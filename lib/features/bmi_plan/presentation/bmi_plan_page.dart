@@ -388,10 +388,6 @@ class _DietSectionState extends State<_DietSection> {
                 ),
               );
             }),
-                  ),
-                ),
-              );
-            }),
           ],
         ],
       );
