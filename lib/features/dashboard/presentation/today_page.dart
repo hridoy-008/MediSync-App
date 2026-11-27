@@ -1111,12 +1111,117 @@ class _GoogleCalendarCard extends GetView<DashboardController> {
   const _GoogleCalendarCard({required this.l});
   final AppLocalizations l;
 
+  void _showEventDetailsBottomSheet(
+      BuildContext context, GoogleCalendarEvent event, bool bangla) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+      ),
+      builder: (sheetContext) {
+        final colors = context.colors;
+        return Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.event, color: Colors.blue, size: 24),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      event.title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Row(
+                children: [
+                  const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${TimeFormat.fromDateTime(event.startTime, bangla: bangla)} - ${TimeFormat.fromDateTime(event.endTime, bangla: bangla)}',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+              if (event.description != null &&
+                  event.description!.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.description_outlined,
+                        size: 16, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        event.description!,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: AppSpacing.lg),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.primary),
+                  onPressed: () {
+                    Navigator.of(sheetContext).pop();
+                    CalendarHelper.addReminderToCalendar(
+                      Reminder(
+                        id: event.id,
+                        type: ReminderType.medicine,
+                        title: event.title,
+                        subtitle: event.description ?? '',
+                        recurrence: const RecurrenceRule(
+                            frequency: RecurrenceFrequency.once),
+                      ),
+                      event.startTime,
+                    );
+                  },
+                  icon: const Icon(Icons.calendar_month, color: Colors.white),
+                  label: Text(
+                    bangla
+                        ? 'গুগল ক্যালেন্ডারে সিঙ্ক করুন'
+                        : 'Sync to Google Calendar',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bangla = Get.find<LocaleController>().isBangla;
     return Obx(() {
       final isConnected = controller.isGoogleCalendarConnected.value;
       final events = controller.googleCalendarEvents;
+
+      bool hasConflict(GoogleCalendarEvent e) {
+        for (final item in controller.timeline) {
+          final t = item.scheduledTime;
+          if (t.isAfter(e.startTime.subtract(const Duration(minutes: 30))) &&
+              t.isBefore(e.endTime.add(const Duration(minutes: 30)))) {
+            return true;
+          }
+        }
+        return false;
+      }
 
       return AppCard(
         child: Column(
@@ -1130,32 +1235,58 @@ class _GoogleCalendarCard extends GetView<DashboardController> {
                     const Icon(Icons.event_note, color: Colors.blue, size: 22),
                     const SizedBox(width: AppSpacing.xs),
                     Text(
-                      bangla ? 'গুগল ক্যালেন্ডার ইভেন্ট' : 'Google Calendar Events',
+                      bangla
+                          ? 'গুগল ক্যালেন্ডার ইভেন্ট'
+                          : 'Google Calendar Events',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ],
                 ),
-                if (!isConnected)
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    onPressed: controller.connectGoogleCalendar,
-                    child: Text(bangla ? 'সংযুক্ত করুন' : 'Connect'),
-                  )
-                else
-                  TextButton(
-                    onPressed: controller.disconnectGoogleCalendar,
-                    child: Text(
-                      bangla ? 'বিচ্ছিন্ন করুন' : 'Disconnect',
-                      style: const TextStyle(color: Colors.red, fontSize: 12),
-                    ),
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isConnected)
+                      IconButton(
+                        icon: const Icon(Icons.add_circle_outline,
+                            color: Colors.blue, size: 20),
+                        tooltip: bangla ? 'ইভেন্ট যোগ করুন' : 'Add Event',
+                        onPressed: () => CalendarHelper.addReminderToCalendar(
+                          Reminder(
+                            id: 'new_gcal_${DateTime.now().millisecondsSinceEpoch}',
+                            type: ReminderType.medicine,
+                            title: bangla
+                                ? 'নতুন ক্যালেন্ডার ইভেন্ট'
+                                : 'New Calendar Event',
+                            recurrence: const RecurrenceRule(
+                                frequency: RecurrenceFrequency.once),
+                          ),
+                          DateTime.now().add(const Duration(hours: 1)),
+                        ),
+                      ),
+                    if (!isConnected)
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        onPressed: controller.connectGoogleCalendar,
+                        child: Text(bangla ? 'সংযুক্ত করুন' : 'Connect'),
+                      )
+                    else
+                      TextButton(
+                        onPressed: controller.disconnectGoogleCalendar,
+                        child: Text(
+                          bangla ? 'বিচ্ছিন্ন করুন' : 'Disconnect',
+                          style: const TextStyle(
+                              color: Colors.red, fontSize: 12),
+                        ),
+                      ),
+                  ],
+                ),
               ],
             ),
             if (isConnected) ...[
@@ -1164,7 +1295,8 @@ class _GoogleCalendarCard extends GetView<DashboardController> {
               const SizedBox(height: AppSpacing.xs),
               if (events.isEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: AppSpacing.xs),
                   child: Text(
                     bangla
                         ? 'আজকের জন্য কোনো গুগল ক্যালেন্ডার ইভেন্ট নেই।'
@@ -1177,45 +1309,87 @@ class _GoogleCalendarCard extends GetView<DashboardController> {
                 )
               else
                 ...events.map(
-                  (e) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 3),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          margin: const EdgeInsets.only(top: 5, right: 6),
-                          decoration: const BoxDecoration(
-                            color: Colors.blue,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        Expanded(
-                          child: Column(
+                  (e) {
+                    final conflict = hasConflict(e);
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: InkWell(
+                        onTap: () =>
+                            _showEventDetailsBottomSheet(context, e, bangla),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                e.title,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              Container(
+                                width: 8,
+                                height: 8,
+                                margin:
+                                    const EdgeInsets.only(top: 5, right: 6),
+                                decoration: const BoxDecoration(
+                                  color: Colors.blue,
+                                  shape: BoxShape.circle,
+                                ),
                               ),
-                              Text(
-                                '${TimeFormat.fromDateTime(e.startTime, bangla: bangla)} - ${TimeFormat.fromDateTime(e.endTime, bangla: bangla)}',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
-                                        color: context.colors.onSurfaceMuted),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            e.title,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                    fontWeight:
+                                                        FontWeight.w600),
+                                          ),
+                                        ),
+                                        if (conflict)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange
+                                                  .withOpacity(0.15),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              bangla
+                                                  ? '⚠️ সময় মিলে গেছে'
+                                                  : '⚠️ Conflict',
+                                              style: const TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.orange,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    Text(
+                                      '${TimeFormat.fromDateTime(e.startTime, bangla: bangla)} - ${TimeFormat.fromDateTime(e.endTime, bangla: bangla)}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                              color: context
+                                                  .colors.onSurfaceMuted),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
             ],
           ],

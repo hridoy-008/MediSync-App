@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
+import '../data/local_store.dart';
 
 class GoogleCalendarEvent {
   const GoogleCalendarEvent({
@@ -19,16 +20,24 @@ class GoogleCalendarEvent {
   final String? description;
 
   factory GoogleCalendarEvent.fromMap(Map<String, dynamic> map) {
-    final start = map['start']?['dateTime'] ?? map['start']?['date'];
-    final end = map['end']?['dateTime'] ?? map['end']?['date'];
+    final start = map['start']?['dateTime'] ?? map['start']?['date'] ?? map['startTime'];
+    final end = map['end']?['dateTime'] ?? map['end']?['date'] ?? map['endTime'];
     return GoogleCalendarEvent(
       id: map['id'] ?? '',
-      title: map['summary'] ?? 'Untitled Event',
-      startTime: start != null ? DateTime.parse(start).toLocal() : DateTime.now(),
-      endTime: end != null ? DateTime.parse(end).toLocal() : DateTime.now(),
+      title: map['summary'] ?? map['title'] ?? 'Untitled Event',
+      startTime: start != null ? DateTime.parse(start.toString()).toLocal() : DateTime.now(),
+      endTime: end != null ? DateTime.parse(end.toString()).toLocal() : DateTime.now(),
       description: map['description'],
     );
   }
+
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'title': title,
+        'startTime': startTime.toIso8601String(),
+        'endTime': endTime.toIso8601String(),
+        if (description != null) 'description': description,
+      };
 }
 
 class GoogleCalendarService {
@@ -49,7 +58,6 @@ class GoogleCalendarService {
       return _isDemoConnected;
     } catch (e) {
       debugPrint('[GoogleCalendar] Sign-in error (enabling demo mode): $e');
-      // Fallback to demo mode so Google Calendar feature works instantly without Firebase SHA-1 errors
       _isDemoConnected = true;
       return true;
     }
@@ -64,6 +72,9 @@ class GoogleCalendarService {
   }
 
   static Future<List<GoogleCalendarEvent>> fetchEventsForDay(DateTime day) async {
+    final dateStr = '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
+    final cacheKey = 'gcalendar_cache_$dateStr';
+
     try {
       _currentUser ??= await _googleSignIn.signInSilently();
       if (_currentUser != null) {
@@ -82,16 +93,34 @@ class GoogleCalendarService {
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
           final items = data['items'] as List? ?? [];
-          return items
+          final events = items
               .map((e) => GoogleCalendarEvent.fromMap(e as Map<String, dynamic>))
               .toList();
+
+          if (LocalStore.instance.isReady) {
+            await LocalStore.instance.singletons.put(
+              cacheKey,
+              events.map((e) => e.toMap()).toList(),
+            );
+          }
+          return events;
         }
       }
     } catch (e) {
       debugPrint('[GoogleCalendar] Error fetching live events: $e');
     }
 
-    // Return sample/demo calendar events if connected in demo mode or live fetch failed
+    // Load from local cache if available
+    if (LocalStore.instance.isReady) {
+      final cachedRaw = LocalStore.instance.singletons.get(cacheKey);
+      if (cachedRaw is List) {
+        return cachedRaw
+            .map((e) => GoogleCalendarEvent.fromMap(Map<String, dynamic>.from(e as Map)))
+            .toList();
+      }
+    }
+
+    // Return sample/demo calendar events if connected in demo mode
     if (_isDemoConnected || _currentUser != null) {
       return [
         GoogleCalendarEvent(
