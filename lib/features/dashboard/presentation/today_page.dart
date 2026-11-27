@@ -195,42 +195,34 @@ class _TodayPageState extends State<TodayPage> {
                             snoozeLabel: l.snooze,
                             skipLabel: l.skip,
                             missedLabel: l.missed,
-                            isActionable: canAct,
-                            isConfirmed: isConfirmed,
-                            onTaken: canAct
-                                ? () => controller.act(
-                                      item,
-                                      ReminderAction.taken,
-                                    )
-                                : null,
-                            onSnooze: canAct
-                                ? () => _showMathVerificationDialog(
-                                      context: context,
-                                      activityTitle: item.reminder.title,
-                                      targetStatus: ReminderStatus.snoozed,
-                                      actionName: l.snooze,
-                                      color: colors.warning,
-                                      isBangla: bangla,
-                                      onVerified: () => controller.act(
-                                          item, ReminderAction.snoozed),
-                                    )
-                                : null,
-                            onSkip: canAct
-                                ? () =>
-                                    controller.act(item, ReminderAction.skipped)
-                                : null,
-                            onMissed: canAct
-                                ? () => _showMathVerificationDialog(
-                                      context: context,
-                                      activityTitle: item.reminder.title,
-                                      targetStatus: ReminderStatus.missed,
-                                      actionName: l.missed,
-                                      color: colors.danger,
-                                      isBangla: bangla,
-                                      onVerified: () => controller.act(
-                                          item, ReminderAction.missed),
-                                    )
-                                : null,
+                            isActionable: true,
+                            isConfirmed: false,
+                            onTaken: () => controller.act(
+                                  item,
+                                  ReminderAction.taken,
+                                ),
+                            onSnooze: () => _showMathVerificationDialog(
+                                  context: context,
+                                  activityTitle: item.reminder.title,
+                                  targetStatus: ReminderStatus.snoozed,
+                                  actionName: l.snooze,
+                                  color: colors.warning,
+                                  isBangla: bangla,
+                                  onVerified: () => controller.act(
+                                      item, ReminderAction.snoozed),
+                                ),
+                            onSkip: () =>
+                                controller.act(item, ReminderAction.skipped),
+                            onMissed: () => _showMathVerificationDialog(
+                                  context: context,
+                                  activityTitle: item.reminder.title,
+                                  targetStatus: ReminderStatus.missed,
+                                  actionName: l.missed,
+                                  color: colors.danger,
+                                  isBangla: bangla,
+                                  onVerified: () => controller.act(
+                                      item, ReminderAction.missed),
+                                ),
                             stockCount: item.reminder.stockCount,
                             isLowStock: item.reminder.isLowStock,
                             completedCount: completedCount,
