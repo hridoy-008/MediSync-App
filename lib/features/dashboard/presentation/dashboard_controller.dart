@@ -225,11 +225,6 @@ class DashboardController extends GetxController {
   }
 
   Future<void> act(TimelineItem item, ReminderAction action) async {
-    final now = DateTime.now();
-    if (now.isBefore(item.scheduledTime)) {
-      // Future task cannot be marked taken or missed before scheduled time
-      return;
-    }
     await _service.logAction(
       reminder: item.reminder,
       scheduledTime: item.scheduledTime,
@@ -291,12 +286,10 @@ class DashboardController extends GetxController {
   }
 
   Future<void> incrementMedicineDose(String reminderId) async {
-    final now = DateTime.now();
     final pendingItem = timeline.firstWhereOrNull(
       (i) =>
           i.reminder.id == reminderId &&
-          i.status == ReminderStatus.pending &&
-          !now.isBefore(i.scheduledTime),
+          i.status == ReminderStatus.pending,
     );
     if (pendingItem != null) {
       await act(pendingItem, ReminderAction.taken);
@@ -304,8 +297,7 @@ class DashboardController extends GetxController {
       final nonTakenItem = timeline.firstWhereOrNull(
         (i) =>
             i.reminder.id == reminderId &&
-            i.status != ReminderStatus.taken &&
-            !now.isBefore(i.scheduledTime),
+            i.status != ReminderStatus.taken,
       );
       if (nonTakenItem != null) {
         await act(nonTakenItem, ReminderAction.taken);

@@ -152,8 +152,8 @@ class _TodayPageState extends State<TodayPage> {
                                 (l.confirmedAt != null ||
                                     l.status == ReminderStatus.taken);
                           });
-                      final isDue = !now.isBefore(item.scheduledTime);
-                      final canAct = isToday && isDue && !isConfirmed;
+                      final isDue = true; // Unlocked for testing all sections (Upcoming, Due, etc.)
+                      final canAct = isToday && !isConfirmed;
 
                       String? statusLabel;
                       Color? statusColor;
@@ -237,7 +237,7 @@ class _TodayPageState extends State<TodayPage> {
                                           item, ReminderAction.snoozed),
                                     )
                                 : null,
-                            onSkip: (canAct && !isWindowPassed)
+                            onSkip: canAct
                                 ? () =>
                                     controller.act(item, ReminderAction.skipped)
                                 : null,
