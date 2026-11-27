@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/design_system/design_system.dart';
 import '../../../core/localization/l10n.dart';
+import '../../../core/localization/locale_controller.dart';
 import '../../../domain/entities/plan.dart';
 import '../../../domain/enums.dart';
 import 'bmi_plan_controller.dart';
@@ -210,6 +211,20 @@ class _DietSectionState extends State<_DietSection> {
           ),
           if (_isExpanded) ...[
             const SizedBox(height: AppSpacing.xs),
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+              child: Text(
+                Get.isRegistered<LocaleController>() &&
+                        Get.find<LocaleController>().isBangla
+                    ? '💡 প্রস্তাবিত ডায়েট: প্রতিটি মিলের জন্য ৩টি করে সাপ্তাহিক বিকল্প (Options) দেওয়া আছে।'
+                    : '💡 Suggested Diet: 3 weekly options provided per meal.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: context.colors.primary,
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ),
             if (hasDetails) ...[
               AppCard(
                 child: Column(
@@ -491,6 +506,20 @@ class _ExerciseSectionState extends State<_ExerciseSection> {
           ),
           if (_isExpanded) ...[
             const SizedBox(height: AppSpacing.xs),
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+              child: Text(
+                Get.isRegistered<LocaleController>() &&
+                        Get.find<LocaleController>().isBangla
+                    ? '💡 প্রস্তাবিত ডায়েট: প্রতিটি মিলের জন্য ৩টি করে সাপ্তাহিক বিকল্প (Options) দেওয়া আছে।'
+                    : '💡 Suggested Diet: 3 weekly options provided per meal.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: context.colors.primary,
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ),
             if (hasDetails) ...[
               AppCard(
                 child: Column(
