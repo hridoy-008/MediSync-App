@@ -3,9 +3,11 @@ import 'package:get/get.dart';
 
 import '../../../core/data/local_store.dart';
 import '../../../core/utils/logger.dart';
+import '../../../domain/entities/plan.dart';
 import '../../../domain/entities/reminder.dart';
 import '../../../domain/enums.dart';
 import '../../../domain/repositories/reminder_repository.dart';
+import '../../bmi_plan/domain/plan_generator.dart';
 import '../domain/activity_entry.dart';
 
 enum ActivityFilterWindow { days7, days15 }
@@ -227,27 +229,89 @@ class ActivityHistoryController extends GetxController {
 
         final exerciseKey = 'exercise_completed_${d.year}-$monthStr-$dayStr';
         final dynamic rawEx = LocalStore.instance.singletons.get(exerciseKey);
-        if (rawEx != null) {
-          List<String> completedList = [];
-          if (rawEx is List) {
-            completedList = rawEx.map((e) => e.toString()).toList();
-          } else if (rawEx is Map && rawEx['completed'] is List) {
-            completedList = (rawEx['completed'] as List)
-                .map((e) => e.toString())
-                .toList();
-          }
 
-          for (final exerciseName in completedList) {
+        List<String> completedList = [];
+        if (rawEx is List) {
+          completedList = rawEx.map((e) => e.toString()).toList();
+        } else if (rawEx is Map && rawEx['completed'] is List) {
+          completedList = (rawEx['completed'] as List)
+              .map((e) => e.toString())
+              .toList();
+        }
+
+        // We will process exercise plan items below after collecting baseExercisePlan
+      }
+    }
+
+    ExercisePlan? baseExercisePlan;
+    if (LocalStore.instance.isReady) {
+      final rawExPlan = LocalStore.instance.singletons.get('exercise_plan');
+      if (rawExPlan != null) {
+        try {
+          baseExercisePlan =
+              ExercisePlan.fromMap(LocalStore.normalize(rawExPlan));
+        } catch (_) {}
+      }
+    }
+    if (baseExercisePlan == null) {
+      final locale = Get.isRegistered<LocaleController>() &&
+              Get.find<LocaleController>().isBangla
+          ? 'bn'
+          : 'en';
+      const planner = PlanGenerator();
+      baseExercisePlan = planner.exercise(
+        category: BmiCategory.normal,
+        localeCode: locale,
+      );
+    }
+
+    if (LocalStore.instance.isReady && baseExercisePlan != null) {
+      for (var d = minCalendarDay;
+          !d.isAfter(todayCalendarDay);
+          d = d.add(const Duration(days: 1))) {
+        final monthStr = d.month.toString().padLeft(2, '0');
+        final dayStr = d.day.toString().padLeft(2, '0');
+        final exerciseKey = 'exercise_completed_${d.year}-$monthStr-$dayStr';
+        final dynamic rawEx = LocalStore.instance.singletons.get(exerciseKey);
+
+        List<String> completedList = [];
+        if (rawEx is List) {
+          completedList = rawEx.map((e) => e.toString()).toList();
+        } else if (rawEx is Map && rawEx['completed'] is List) {
+          completedList = (rawEx['completed'] as List)
+              .map((e) => e.toString())
+              .toList();
+        }
+
+        final isPastDay = d.isBefore(todayCalendarDay);
+
+        for (final exerciseItem in baseExercisePlan.items) {
+          final exerciseName = exerciseItem.name;
+          final isCompleted = completedList.contains(exerciseName);
+
+          if (isCompleted) {
             final dateStart = DateTime(d.year, d.month, d.day);
             final exerciseTimestamp =
                 DateTime(dateStart.year, dateStart.month, dateStart.day, 18, 30);
             entries.add(ActivityEntry(
-              id: 'exercise_${d.year}-$monthStr-$dayStr_$exerciseName',
+              id: 'exercise_completed_${d.year}-$monthStr-$dayStr_$exerciseName',
               category: ActivityCategory.exercise,
               title: exerciseName,
-              subtitle: 'Exercise completed',
+              subtitle: '${exerciseItem.durationMins} min - Exercise completed',
               timestamp: exerciseTimestamp,
               status: ActivityStatus.completed,
+            ));
+          } else if (isPastDay) {
+            final dateStart = DateTime(d.year, d.month, d.day);
+            final exerciseTimestamp =
+                DateTime(dateStart.year, dateStart.month, dateStart.day, 18, 30);
+            entries.add(ActivityEntry(
+              id: 'exercise_missed_${d.year}-$monthStr-$dayStr_$exerciseName',
+              category: ActivityCategory.exercise,
+              title: exerciseName,
+              subtitle: '${exerciseItem.durationMins} min - Missed',
+              timestamp: exerciseTimestamp,
+              status: ActivityStatus.missed,
             ));
           }
         }
