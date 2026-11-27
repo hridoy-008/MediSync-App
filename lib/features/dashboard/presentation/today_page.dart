@@ -320,6 +320,17 @@ class _TodayPageState extends State<TodayPage> {
                     AppSpacing.md,
                     AppSpacing.md,
                     AppSpacing.md,
+                    0,
+                  ),
+                  child: _ExercisePlanCard(l: l),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    AppSpacing.md,
                     AppSpacing.xxl,
                   ),
                   child: AppCard(
@@ -540,6 +551,106 @@ class _WaterTrackerCard extends GetView<DashboardController> {
                 ),
               ],
             ),
+          ],
+        ),
+      );
+    });
+  }
+}
+
+class _ExercisePlanCard extends GetView<DashboardController> {
+  const _ExercisePlanCard({required this.l});
+  final AppLocalizations l;
+
+  @override
+  Widget build(BuildContext context) {
+    final bangla = Get.find<LocaleController>().isBangla;
+    return Obx(() {
+      final plan = controller.exercisePlan.value;
+      if (plan == null) return const SizedBox.shrink();
+      final totalMins =
+          plan.items.fold<int>(0, (sum, e) => sum + e.durationMins);
+      final completedItems = controller.completedExercises;
+
+      return AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.fitness_center,
+                        color: context.colors.primary, size: 22),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(l.exercisePlan,
+                        style: Theme.of(context).textTheme.titleMedium),
+                  ],
+                ),
+                TextButton(
+                  onPressed: () => controller.setTab(2),
+                  child: Text(bangla ? 'বিস্তারিত' : 'View Plan'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${l.exerciseDuration}: $totalMins min',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: context.colors.onSurfaceMuted,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            const Divider(height: 1),
+            const SizedBox(height: AppSpacing.xs),
+            ...plan.items.map((item) {
+              final isDone = completedItems.contains(item.name);
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    Checkbox(
+                      value: isDone,
+                      onChanged: (val) =>
+                          controller.toggleExerciseCompleted(item.name),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.name,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  decoration: isDone
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                  color: isDone
+                                      ? context.colors.onSurfaceMuted
+                                      : null,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
+                          Text(
+                            '${item.durationMins} min',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                  color: context.colors.onSurfaceMuted,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
           ],
         ),
       );

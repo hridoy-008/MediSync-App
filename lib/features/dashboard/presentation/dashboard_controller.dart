@@ -10,12 +10,14 @@ import '../../../core/design_system/tokens.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/utils/motivational_messages.dart';
 import '../../../domain/entities/configs.dart';
+import '../../../domain/entities/plan.dart';
 import '../../../domain/entities/reminder.dart';
 import '../../../domain/entities/user_profile.dart';
 import '../../../domain/enums.dart';
 import '../../../domain/repositories/config_repository.dart';
 import '../../../domain/repositories/profile_repository.dart';
 import '../../../domain/repositories/reminder_repository.dart';
+import '../../bmi_plan/domain/plan_generator.dart';
 import '../../reminders/application/reminder_service.dart';
 import '../../reminders/domain/timeline_builder.dart';
 import '../../reminders/domain/timeline_item.dart';
@@ -67,10 +69,20 @@ class DashboardController extends GetxController {
   final waterConsumedGlasses = 0.obs;
   final waterTargetGlasses = 10.obs;
 
+  // Exercise Plan state on Dashboard
+  final Rxn<ExercisePlan> exercisePlan = Rxn<ExercisePlan>();
+  final completedExercises = <String>[].obs;
+
   String _waterKeyForDate(DateTime d) {
     final monthStr = d.month.toString().padLeft(2, '0');
     final dayStr = d.day.toString().padLeft(2, '0');
     return 'water_log_${d.year}-$monthStr-$dayStr';
+  }
+
+  String _exerciseKeyForDate(DateTime d) {
+    final monthStr = d.month.toString().padLeft(2, '0');
+    final dayStr = d.day.toString().padLeft(2, '0');
+    return 'exercise_completed_${d.year}-$monthStr-$dayStr';
   }
 
   @override
@@ -170,6 +182,7 @@ class DashboardController extends GetxController {
     snoozedCount.value = items.where((i) => i.status == ReminderStatus.snoozed).length;
     nextUp.value = _builder.nextUp(items, DateTime.now());
     await _loadWaterTracker(targetDay);
+    await _loadExercisePlan(targetDay);
 
     debugPrint('[DATE HISTORY] Filtered Records: ${items.length}');
     debugPrint('[HISTORY] RECORDS FOUND: ${items.length}');
@@ -221,6 +234,63 @@ class DashboardController extends GetxController {
       await LocalStore.instance.singletons.put(
           _waterKeyForDate(selectedDate.value),
           {'glasses': waterConsumedGlasses.value});
+    }
+  }
+
+  Future<void> _loadExercisePlan(DateTime targetDay) async {
+    if (LocalStore.instance.isReady) {
+      final rawExercise = LocalStore.instance.singletons.get('exercise_plan');
+      if (rawExercise != null) {
+        try {
+          exercisePlan.value =
+              ExercisePlan.fromMap(LocalStore.normalize(rawExercise));
+        } catch (_) {
+          _loadDefaultExercisePlan();
+        }
+      } else {
+        _loadDefaultExercisePlan();
+      }
+    } else {
+      _loadDefaultExercisePlan();
+    }
+
+    if (LocalStore.instance.isReady) {
+      final dynamic raw =
+          LocalStore.instance.singletons.get(_exerciseKeyForDate(targetDay));
+      if (raw is List) {
+        completedExercises.assignAll(raw.map((e) => e.toString()).toList());
+      } else if (raw is Map && raw['completed'] is List) {
+        completedExercises.assignAll(
+            (raw['completed'] as List).map((e) => e.toString()).toList());
+      } else {
+        completedExercises.clear();
+      }
+    } else {
+      completedExercises.clear();
+    }
+  }
+
+  void _loadDefaultExercisePlan() {
+    final locale = Get.isRegistered<LocaleController>() &&
+            Get.find<LocaleController>().isBangla
+        ? 'bn'
+        : 'en';
+    final category = profile.value.bmiCategory ?? BmiCategory.normal;
+    const planner = PlanGenerator();
+    exercisePlan.value = planner.exercise(category: category, localeCode: locale);
+  }
+
+  Future<void> toggleExerciseCompleted(String exerciseName) async {
+    if (completedExercises.contains(exerciseName)) {
+      completedExercises.remove(exerciseName);
+    } else {
+      completedExercises.add(exerciseName);
+    }
+    if (LocalStore.instance.isReady) {
+      await LocalStore.instance.singletons.put(
+        _exerciseKeyForDate(selectedDate.value),
+        {'completed': completedExercises.toList()},
+      );
     }
   }
 
