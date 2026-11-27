@@ -100,7 +100,7 @@ class GoogleCalendarService {
           if (LocalStore.instance.isReady) {
             await LocalStore.instance.singletons.put(
               cacheKey,
-              events.map((e) => e.toMap()).toList(),
+              {'events': events.map((e) => e.toMap()).toList()},
             );
           }
           return events;
@@ -113,9 +113,10 @@ class GoogleCalendarService {
     // Load from local cache if available
     if (LocalStore.instance.isReady) {
       final cachedRaw = LocalStore.instance.singletons.get(cacheKey);
-      if (cachedRaw is List) {
-        return cachedRaw
-            .map((e) => GoogleCalendarEvent.fromMap(Map<String, dynamic>.from(e as Map)))
+      if (cachedRaw is Map && cachedRaw['events'] is List) {
+        return (cachedRaw['events'] as List)
+            .map((e) => GoogleCalendarEvent.fromMap(
+                Map<String, dynamic>.from(e as Map)))
             .toList();
       }
     }
