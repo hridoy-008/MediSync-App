@@ -132,6 +132,7 @@ class _TodayPageState extends State<TodayPage> {
 
                       final isConfirmed = false; // Always show action buttons for testing
                       final canAct = true; // Always actionable for testing
+                      final isDue = true; // Always due for testing
 
                       String? statusLabel;
                       Color? statusColor;
