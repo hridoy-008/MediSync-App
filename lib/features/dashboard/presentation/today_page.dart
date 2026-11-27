@@ -280,7 +280,12 @@ class _TodayPageState extends State<TodayPage> {
                             description: item.mealDescription,
                             isBangla: bangla,
                             onEdit: isConfirmed
-                                ? () => controller.resetAction(item)
+                                ? () => _showEditActionSheet(
+                                      context: context,
+                                      item: item,
+                                      isBangla: bangla,
+                                      controller: controller,
+                                    )
                                 : (item.type == ReminderType.meal &&
                                         item.mealConfig != null)
                                     ? () {
@@ -865,6 +870,112 @@ Future<void> _showMathVerificationDialog({
             ],
           );
         },
+      );
+    },
+  );
+}
+
+void _showEditActionSheet({
+  required BuildContext context,
+  required TimelineItem item,
+  required bool isBangla,
+  required DashboardController controller,
+}) {
+  showModalBottomSheet<void>(
+    context: context,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+    ),
+    builder: (sheetContext) {
+      final colors = context.colors;
+      return Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isBangla ? 'রিমাইন্ডার স্ট্যাটাস এডিট করুন' : 'Edit Reminder Action',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            ListTile(
+              leading: Icon(Icons.check_circle_outline, color: colors.success),
+              title: Text(isBangla ? 'গৃহীত (Taken)' : 'Taken'),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                _showMathVerificationDialog(
+                  context: context,
+                  activityTitle: item.reminder.title,
+                  targetStatus: ReminderStatus.taken,
+                  actionName: isBangla ? 'গৃহীত' : 'Taken',
+                  color: colors.success,
+                  isBangla: isBangla,
+                  onVerified: () => controller.act(item, ReminderAction.taken),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.snooze, color: colors.warning),
+              title: Text(isBangla ? 'স্নুজ (Snooze)' : 'Snooze'),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                _showMathVerificationDialog(
+                  context: context,
+                  activityTitle: item.reminder.title,
+                  targetStatus: ReminderStatus.snoozed,
+                  actionName: isBangla ? 'স্নুজ' : 'Snooze',
+                  color: colors.warning,
+                  isBangla: isBangla,
+                  onVerified: () => controller.act(item, ReminderAction.snoozed),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.close, color: colors.onSurfaceMuted),
+              title: Text(isBangla ? 'বাদ (Skip)' : 'Skip'),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                _showMathVerificationDialog(
+                  context: context,
+                  activityTitle: item.reminder.title,
+                  targetStatus: ReminderStatus.skipped,
+                  actionName: isBangla ? 'বাদ' : 'Skip',
+                  color: colors.onSurfaceMuted,
+                  isBangla: isBangla,
+                  onVerified: () => controller.act(item, ReminderAction.skipped),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.error_outline, color: colors.danger),
+              title: Text(isBangla ? 'মিসড (Missed)' : 'Missed'),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                _showMathVerificationDialog(
+                  context: context,
+                  activityTitle: item.reminder.title,
+                  targetStatus: ReminderStatus.missed,
+                  actionName: isBangla ? 'মিসড' : 'Missed',
+                  color: colors.danger,
+                  isBangla: isBangla,
+                  onVerified: () => controller.act(item, ReminderAction.missed),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: Icon(Icons.refresh, color: colors.primary),
+              title: Text(isBangla ? 'রিসেট করুন (Pending-এ ফেরান)' : 'Reset to Pending'),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                controller.resetAction(item);
+              },
+            ),
+          ],
+        ),
       );
     },
   );
